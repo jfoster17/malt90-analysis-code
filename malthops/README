@@ -1,0 +1,142 @@
+README: instructions on how to use code
+---------------------------------------
+
+This assumes you have the following installed
+- miriad
+- pdl
+- pgplot.pm and f77.pm
+- pgplot
+- sherpa (ciao 4.2)
+- latex
+
+and probably some other dependencies I'm unaware of
+
+------------------------------------------------------------
+Installation and Setup
+--------------
+
+* CIAO 4.2
+http://cxc.harvard.edu/ciao/download/
+The "Quick Installation" should be fine. I installed in /usr/local
+Under tcsh
+
+    source /usr/local/ciao-4.2/bin/ciao.csh
+
+* pgplot5
+This is available through apt-get on Ubuntu
+
+===== This step no longer useful ====
+
+add
+PGPLOT_DIR=/usr/lib/pgplot5
+
+to your startup file. PGPLOT5 will work okay without this line, except
+for not displaying any text on your images.
+
+=====================================
+
+* pdl (Perl Data Language)
+This is available through apt-get on Ubuntu
+
+I also had to install pgplot.pm (and its prereq f77.pm). These I had
+to install "by-hand" following the INSTALL instructions in the
+downloaded file.
+
+* pgplot.pm  -- http://search.cpan.org/~kgb/PGPLOT/
+* f77.pm -- http://search.cpan.org/~kgb/ExtUtils-F77-1.16/F77.pm
+
+I had to define a new environment variable pointing to the install
+location. Depending on where you install this may not be necessary.
+
+setenv PERL5LIB "INSTALLDIR/lib/perl/5.8.8:INSTALLDIR/share/perl/5.8.8"
+
+MIRIAD
+http://www.astro.umd.edu/~teuben/miriad/intro.html
+-------
+It is known to work out of the box on most Linux and MacOSX machines..
+On the simplest level it can be done with the following two commands:
+
+  curlftp://ftp.astro.umd.edu/progs/bima/miriad.tar.gz  | tar zxf -
+
+miriad/install/install.miriad
+
+after which you must do
+
+  source /usr/local/miriad/miriad_start.csh
+
+to add the appropriate variables to your path.
+
+------------------------------------------------------------
+Change paths
+---------------
+
+Several paths are hard-coded. At a minimum you need to change lines
+15/16 of run_batch.pl
+
+$nh3_11_dir = ...
+$nh3_22_dir = ...
+to point to your data files.
+
+Lines 19-26 in nh3_fit_sherpa_out_hops.pl need to be configured to
+point to the PDL install location (default often okay).
+
+Do NOT bother to modify paths sherpa_fits.py, this file is generated
+by fit_sherpa_batch_tl_hops.pl. If you need to change the paths
+defined, do it here. Most of these are standard locations for a python
+2.5 install.
+
+------------------------------------------------------------
+Run the fitting
+---------------
+
+The whole procedure is wrapped up in "run_batch.pl"
+
+"run_batch.pl":
+	
+	- takes two input directories, one for each of NH3(1,1) and (2,2)
+
+	- reads in all the fits files in these two directories 
+
+	- checks there is both an image file and a fits file for both
+          11 and 22 
+
+	- checks the names match between 11 and 22
+
+	- outputs some text files: "stats.txt", "fits.tex",
+          "batch.txt". not sure how useful the first file actually
+          is. "fits.tex" is used by "nh3_fit_sherpa_out_hops.pl" to
+          output the fits values to create a latex table. "batch.txt"
+          is the file used as input to the sherpa fitting.
+
+	- spectrally smooths the data 
+
+	- runs the sherpa fitting with the command
+          "./fit_sherpa_batch_tl_hops.pl batch.txt". Creates a whole
+          bunch of files "*ampl.fits", "*fwhm.fits", "*pos.fits",
+          "*resid.fits"
+
+	- runs the nh3 analysis program on the output from the sherpa
+          fitting.
+
+
+"./fit_sherpa_batch_tl_hops.pl <INFILE>"
+    
+        - calls sherpa to do the fitting
+
+	- both the input files and the fitting parameters are read in
+          from <INFILE>. 
+
+"nh3_fit_sherpa_out_hops.pl ": 
+
+        - this program takes 8 command-line inputs.
+
+	- the output files from sherpa are read in to PDL and the
+          physical values are derived and spatial maps created.
+
+------------------------------------------------------------
+Example of the running nh3_fit_sherpa_out_hops.pl
+-------------------------------------------------
+
+ ./nh3_fit_sherpa_out_hops.pl hops_reg1 source_1_11 source_1_22 G330_a_NH3_clumps/NH311/clump_1_img.fits G330_a_NH3_clumps/NH322/clump_1_img.fits none
+
+./nh3_fit_sherpa_out_hops.pl clump_10_img clump_10_img_11 clump_10_img_22 /home/slongmor/sherpa/hops/crp_test1/G330_a_NH3_clumps/NH311/clump_10_img.fits /home/slongmor/sherpa/hops/crp_test1/G330_a_NH3_clumps/NH322/clump_10_img.fits none

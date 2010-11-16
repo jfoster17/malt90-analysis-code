@@ -1,0 +1,1 @@
+03,18,33,48 * * * * /bin/sh /epp/atapplic/malt/reduce/rsync_malt90.sh
