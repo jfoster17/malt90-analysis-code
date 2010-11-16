@@ -8,7 +8,7 @@ import sys
 import os
 import pyfits
 
-data_dir = "/mako3/MALT_1/MALT90/data/"
+data_dir = "/DATA/MALT_1/MALT90/data/"
 
 def main():
 	"""HN13C and SiO were swapped in the v1.4 data pipeline (and prior). This script renames files to fix this."""
