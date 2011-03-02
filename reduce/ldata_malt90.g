@@ -5,7 +5,7 @@
 
 include 'livedatareducer.g'
 
-lines := ["n2hp","13cs","h41a","ch3cn","hc3n","13c34s","hnc","hc13ccn","hcop","hcn","hnco413","hnco404","c2h","sio","hn13c","h13cop"]
+lines := ["n2hp","13cs","h41a","ch3cn","hc3n","13c34s","hnc","hc13ccn","hcop","hcn","hnco413","hnco404","c2h","hn13c","sio","h13cop"]
 
 # Input directory.
 read_dir := '/DATA/MALT_1/MALT90/data/renamed'
