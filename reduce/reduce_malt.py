@@ -140,23 +140,23 @@ def create_source_folder(source,lines):
 	"""Create a folder of symlinks for each source"""
 	redlog = ReduceLog.ReduceLog()
 	try:
-		os.mkdir(data_dir+"final")
+		os.mkdir(data_dir+"sources")
 	except OSError:
 		pass
 	for line in lines:
 		try:
-			os.mkdir(data_dir+'final/'+source)
+			os.mkdir(data_dir+'sources/'+source)
 		except OSError:
 			pass
 		filename = source+'_'+line+'_MEAN.fits'
 		src = data_dir+'gridzilla/'+line+'/'+filename
-		targ = data_dir+'final/'+source+'/'+filename
+		targ = data_dir+'sources/'+source+'/'+filename
 		try:
 			os.symlink(src,targ)
 		except OSError:
 			pass
 		momsrc = data_dir+'moment_maps/'+line+'/'+source+'_'+line+'_MEAN_mom_maps'
-		momtarg = data_dir+'final/'+source+'/'+source+'_'+line+'_MEAN_mom_maps'
+		momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_MEAN_mom_maps'
 		try:
 			shutil.copytree(momsrc,momtarg)
 		except OSError:
