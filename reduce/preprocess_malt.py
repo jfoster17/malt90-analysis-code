@@ -32,7 +32,8 @@ import sys, os, glob, shutil
 from asap import *
 import ReduceLog
 
-sd = '/nfs/atapplic/malt/reduce/'
+#sd = '/nfs/atapplic/malt/reduce/'
+sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/'
 rename_dir = '/DATA/MALT_1/MALT90/data/renamed/'
 data_dir = '/DATA/MALT_1/MALT90/raw_data/'
 vnum = "1.5"

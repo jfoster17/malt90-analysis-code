@@ -11,9 +11,10 @@ class ReduceLog:
 		self.location = '/DATA/MALT_1/MALT90/reduction_log.txt'
 		self.lock = '/DATA/MALT_1/MALT90/lock.txt'
 #		self.srcdir = '/DATA/ARCHIVE_1/Mopra/'		
-		self.sd = '/nfs/atapplic/malt/reduce/'
+#		self.sd = '/nfs/atapplic/malt/reduce/'
+		self.sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/'
 		self.source_dir = '/DATA/MALT_1/MALT90/raw_data/'
-		self.class_file = self.sd+'Malt90Catalog_classifications_v7.txt'
+		self.class_file = self.sd+'Malt90Catalog_classifications_v9.txt'
 		self.fname = []
 		self.id = []
 		self.source = []
@@ -212,15 +213,19 @@ class ReduceLog:
 				pass
 			else:
 				en = line.split()
-				self.fname.append(en[0])
-				self.id.append(en[1])
-				self.source.append(en[2])
-				self.rename.append(en[3])
-				self.smooth.append(en[4])
-				self.ldata.append(en[5])
-				self.gzilla.append(en[6])
-				self.arrange.append(en[7])
-				self.mommaps.append(en[8])
+				try:
+					self.fname.append(en[0])
+					self.id.append(en[1])
+					self.source.append(en[2])
+					self.rename.append(en[3])
+					self.smooth.append(en[4])
+					self.ldata.append(en[5])
+					self.gzilla.append(en[6])
+					self.arrange.append(en[7])
+					self.mommaps.append(en[8])
+				except IndexError: #Deal with blank line
+					print("Blank or corrupt line in reduction log")
+					pass
 		f.close()
 
 	def save(self):

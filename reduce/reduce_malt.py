@@ -17,7 +17,8 @@ import pyfits
 import ReduceLog
 
 vnum = "1.5"
-sd = '/nfs/atapplic/malt/reduce/'
+#sd = '/nfs/atapplic/malt/reduce/'
+sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/' #Seems to be new location
 data_dir = '/DATA/MALT_1/MALT90/data/'
 
 def main():
