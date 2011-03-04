@@ -6,8 +6,8 @@ reduce_malt.py
 A script to reduce Malt90 data.
 Executes glish scripts which control livedata/gridzilal
 Raw-Data->renamed/source
-Livedata->ldata/line
-Gridzilla->finished/line
+Livedata->livedata/line
+Gridzilla->gridzilla/line
 Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in previous versions)
 """
 
@@ -69,12 +69,12 @@ def setup_lines():
 	lines = ["ch3cn","h41a","13cs","n2hp",
 		 "hc13ccn","hnc","13c34s","hc3n",
 		 "hnco404","hnco413","hcn","hcop",
-		 "h13cop","sio","hn13c","c2h"]
+		 "c2h","hn13c","sio","h13cop"]
 
-	freqs = [91985.316, 92034.475,  92494.303,93173.772,
+	freqs = [91985.316, 92034.475,  92494.303, 93173.772,
 		 90593.059, 90663.572,  90926.036, 90978.989,
-		 87925.238, 88239.027,  88631.847 89188.526,
-		 86754.330, 86847.010,  87090.850, 87316.92]
+		 87925.238, 88239.027,  88631.847, 89188.526,
+		 87316.925, 87090.850, 86847.010, 86754.330]	
 
 	return(lines,freqs)
 
