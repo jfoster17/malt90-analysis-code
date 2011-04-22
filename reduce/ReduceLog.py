@@ -81,7 +81,7 @@ class ReduceLog:
 		self.read()
 		undone_files = []
 		for i, entry in enumerate(self.rename):
-			if (self.ldata[i] < vcheck) or (self.gzilla[i] < vcheck) or (self.arrange[i] < vcheck) or (self.arrange[i] < vcheck):
+			if (self.ldata[i] < vcheck) or (self.gzilla[i] < vcheck) or (self.arrange[i] < vcheck) or (self.mommaps[i] < vcheck):
 				undone_files.append(self.fname[i])
 		fcntl.flock(g,8) #Release lock file
 		return(undone_files)

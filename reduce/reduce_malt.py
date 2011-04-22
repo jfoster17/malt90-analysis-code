@@ -11,7 +11,7 @@ Gridzilla->gridzilla/line
 Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in previous versions)
 """
 
-import sys,os,shutil,getops
+import sys,os,shutil,getopt
 from subprocess import *
 import pyfits
 import ReduceLog
@@ -23,10 +23,10 @@ data_dir = '/DATA/MALT_1/MALT90/data/'
 
 def main():
 	try:
-		opts,args=getopt.getopt(sys.argv[1:], "nsafi")
+		opts,args=getopt.getopt(sys.argv[1:], "n:s:af:i:")
 	except getopt.GetoptError,err:
 		print str(err)
-		usage()
+		#usage()
 		sys.exit(2)
 	force_list  = []
 	ignore_list = []
@@ -36,15 +36,18 @@ def main():
 
 	for o,a in opts:
 		if o == "-f":
-			force_list = list(a)
+			force_list = a.split(',')
+			print(force_list)
 		elif o == "-i":
-			ignore_list = list(a)
+			ignore_list = a.split(',')
+			print(ignore_list)
 		elif o == "-n":
 			do_date = True
 			date = a
 		elif o == "-s":
 			do_source = True
 			source = a
+			print(source)
 		elif o == "-a":
 			do_all = True
 		else:
@@ -182,9 +185,9 @@ def do_gridzilla(source,filenames,lines,freqs,force=False):
 					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
 					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
 				except IOError:
-					print("Failed to make joint source")
+					print("Failed to move flotsam files")
 					#This does not return a useful error
-def create_source_folder(source,lines):
+def create_source_folder(source,lines,force=False):
 	"""Create a folder of symlinks for each source"""
 	redlog = ReduceLog.ReduceLog()
 	try:
@@ -209,14 +212,14 @@ def create_source_folder(source,lines):
 			shutil.copytree(momsrc,momtarg)
 		except OSError:
 			pass
-		try:
-			hdulist = pyfits.open(targ,mode='update')
-			prihdr = hdulist[0].header
-			prihdr.update('M90PIPEV',vnum,'Malt90 Pipeline Version')
-			prihdr.update('BUNIT','K','Antenna Temperature')
-			hdulist.flush()
-		except:
-			print("Header update failed")
+		
+		hdulist = pyfits.open(targ,mode='update')
+		prihdr = hdulist[0].header
+		prihdr.update('M90PIPEV',vnum,'Malt90 Pipeline Version')
+		prihdr.update('BUNIT','K','Antenna Temperature')
+		hdulist.flush()
+		#except:
+			#print("Header update failed")
 	files_involved = [source+"_GLat",source+"_GLon"]
 	for file_involved in files_involved:
 		#print(file_involved)
@@ -225,7 +228,7 @@ def create_source_folder(source,lines):
 		except:
 			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
 	
-def do_mommaps(source,lines):
+def do_mommaps(source,lines,force=False):
 	"""Make moment maps for source and place them correctly
 	Determine a source velocity (currently from table)
 	Make moment map for GLon, GLat, combined in mommaps/line
