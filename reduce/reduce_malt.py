@@ -55,7 +55,7 @@ def main():
 	elif do_source:
 		sources = [source]
 	elif do_all:
-		sources = redlog.find_undone(source)
+		sources = redlog.find_undone(source,vnum)
 	print(sources)
 	for one_source in sources:
 		do_reduction(one_source,force_list,ignore_list)
@@ -124,7 +124,7 @@ def make_dirs(dirname,lines):
 		except OSError:
 			pass
 
-def do_livedata(filenames,lines,over_ldata):
+def do_livedata(filenames,lines,force=False):
 	make_dirs("livedata",lines)
 	redlog = ReduceLog.ReduceLog()
 	for filename in filenames:
@@ -132,17 +132,17 @@ def do_livedata(filenames,lines,over_ldata):
 		if os.path.exists(data_dir+'renamed/'+filename):
 			#print(filename)
 			ftemp = filename
-			ldata_done = redlog.check_val(ftemp.replace('.rpf',''),"ldata",vnum)
+			ldata_needed = redlog.check_val(ftemp.replace('.rpf',''),"ldata",vnum)
 			#print("Ldata")
 			#print(ldata_done)
-			if ldata_done and not over_ldata:
+			if ldata_needed or force:
 				p = Popen(["glish",'-l',sd+'ldata_malt90.g','-plain',filename])
 				p.wait()
 				redlog.set_val(ftemp.replace('.rpf',''),"ldata",vnum)
 		
 
-def do_gridzilla(source,filenames,lines,freqs,over_gzilla_ind,over_gzilla_both):
-	print(over_gzilla_both)
+def do_gridzilla(source,filenames,lines,freqs,force=False):
+	# print(over_gzilla_both)
 	make_dirs("gridzilla",lines)
 	redlog = ReduceLog.ReduceLog()
 	if len(filenames) == 2:
@@ -152,20 +152,21 @@ def do_gridzilla(source,filenames,lines,freqs,over_gzilla_ind,over_gzilla_both):
 		gzilla_do2 = redlog.check_val(fn2.replace(".sdfits",""),"gzilla",vnum) 
 	for fn in filenames:
 		fail_flag = False
-		gzilla_do = redlog.check_val(fn.replace(".sdfits",""),"gzilla",vnum) 
+		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),"gzilla",vnum) 
 		for i,(line,freq) in enumerate(zip(lines,freqs)):
 			filein  = fn.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = fn.replace(".sdfits","")+'_'+line
 			#print(filein)
-			if gzilla_do or over_gzilla_ind:
+			if gzilla_needed or force:
 				q = Popen(["glish",'-l',sd+'gzill_malt90.g',\
 					line,str(freq),str(i),fileout,filein])
 				q.wait() 
 				try:
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
 				except IOError:
 					fail_flag = True
+					print("Failed to move flotsam files")
 		if not fail_flag:
 			redlog.set_val(fn.replace(".sdfits",""),"gzilla",vnum)
 	if len(filenames) == 2:
@@ -173,15 +174,16 @@ def do_gridzilla(source,filenames,lines,freqs,over_gzilla_ind,over_gzilla_both):
 			file1   = fn1.replace(".sdfits","")+'_'+line+'.sdfits'
 			file2   = fn2.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = source+'_'+line
-			if gzilla_do1 or gzilla_do2 or over_gzilla_both:
+			if gzilla_do1 or gzilla_do2 or force:
 				q = Popen(["glish",'-l',sd+'gzill_malt90.g',\
 					line,str(freq),str(i),fileout,file1,file2])
 				q.wait()
 				try:
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
 				except IOError:
 					print("Failed to make joint source")
+					#This does not return a useful error
 def create_source_folder(source,lines):
 	"""Create a folder of symlinks for each source"""
 	redlog = ReduceLog.ReduceLog()
@@ -223,6 +225,20 @@ def create_source_folder(source,lines):
 		except:
 			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
 	
+def do_mommaps(source,lines):
+	"""Make moment maps for source and place them correctly
+	Determine a source velocity (currently from table)
+	Make moment map for GLon, GLat, combined in mommaps/line
+	Copy the combined moment map into sources/ folder
+	"""
+
+	redlog = ReduceLog.ReduceLog()
+	files_involved = [source+"_GLat",source+"_GLon"]
+	print("I would be doing a moment map")
+	for file_involved in files_involved:
+		redlog.set_val(file_involved,"mommaps",vnum)
+	pass
+
 if __name__ == '__main__':
 	main()
 

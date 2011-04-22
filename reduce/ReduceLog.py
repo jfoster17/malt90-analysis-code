@@ -74,7 +74,18 @@ class ReduceLog:
 		else:
 			return(False)
 		fcntl.flock(g,8) #Release lock file
-
+	
+	def find_undone(self,vcheck):
+		g = open(self.lock)
+		fcntl.flock(g,2) #Lock the lock file during access
+		self.read()
+		undone_files = []
+		for i, entry in enumerate(self.rename):
+			if (self.ldata[i] < vcheck) or (self.gzilla[i] < vcheck) or (self.arrange[i] < vcheck) or (self.arrange[i] < vcheck):
+				undone_files.append(self.fname[i])
+		fcntl.flock(g,8) #Release lock file
+		return(undone_files)
+		
 	def find_new_files(self,vcheck,datestring="20"):
 		g = open(self.lock)
 		fcntl.flock(g,2) #Lock the lock file during access
