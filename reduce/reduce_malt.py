@@ -11,7 +11,7 @@ Gridzilla->gridzilla/line
 Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in previous versions)
 """
 
-import sys,os,shutil
+import sys,os,shutil,getops
 from subprocess import *
 import pyfits
 import ReduceLog
@@ -22,38 +22,73 @@ sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/' #Seems to be new location
 data_dir = '/DATA/MALT_1/MALT90/data/'
 
 def main():
-	source = sys.argv[1]
-	if source[0] == "G": #This is an individual source
-		sources = [source]
-	else: #Accept a date
-		redlog = ReduceLog.ReduceLog()
+	try:
+		opts,args=getopt.getopt(sys.argv[1:], "nsafi")
+	except getopt.GetoptError,err:
+		print str(err)
+		usage()
+		sys.exit(2)
+	force_list  = []
+	ignore_list = []
+	do_source = False
+	do_date   = False
+	do_all    = False
+
+	for o,a in opts:
+		if o == "-f":
+			force_list = list(a)
+		elif o == "-i":
+			ignore_list = list(a)
+		elif o == "-n":
+			do_date = True
+			date = a
+		elif o == "-s":
+			do_source = True
+			source = a
+		elif o == "-a":
+			do_all = True
+		else:
+			assert False, "unhandled option"
+	redlog = ReduceLog.ReduceLog()
+	if do_date:
 		sources = redlog.find_files_with_date(source)
+	elif do_source:
+		sources = [source]
+	elif do_all:
+		sources = redlog.find_undone(source)
 	print(sources)
 	for one_source in sources:
-		do_reduction(one_source)
+		do_reduction(one_source,force_list,ignore_list)
 
-def do_reduction(source):
+def do_reduction(source,force_list=None,ignore_list=None):
 	lines,freqs = setup_lines()
-	try:
-		override = sys.argv[2].strip()
-		print(override)
-	except IndexError:
-		override = "none"
-		print("No override command")
-	over_ldata = False
-	over_gzilla_ind = False
-	over_gzilla_both = False
-	if override == "ldata":
-		over_ldata = True
-	elif override == "gzilla_ind":
-		over_gzilla_ind = True
-	elif override == "gzilla_both":
-		over_gzilla_both = True
+	### Do Livedata ###
 	filenames = [source+'_GLat.rpf',source+'_GLon.rpf']
-	do_livedata(filenames,lines,over_ldata)
+	if 'ldata' in force_list:
+		do_livedata(filenames,lines,force=True)
+	elif 'ldata' in ignore_list:
+		pass
+	else:
+		do_livedata(filenames,lines,force=False)
+	### Do Gridzilla ###
 	filenames = [source+'_GLat.sdfits',source+'_GLon.sdfits']
-	do_gridzilla(source,filenames,lines,freqs,over_gzilla_ind,over_gzilla_both)
+	if 'gzilla' in force_list:
+		do_gridzilla(source,filenames,lines,freqs,force=True)
+	elif 'gzilla' in ignore_list:
+		pass
+	else:
+		do_gridzilla(source,filenames,lines,freqs,force=False)
+	### Do Reorganization ###
+	### I think it is fine to always do this step ###
 	create_source_folder(source,lines)
+
+	### Do moment maps ###
+	if 'mommaps' in force_list:
+		do_mommaps(source,filenames,force=True)
+	elif 'mommaps' in ignore_list:
+		pass
+	else:
+		do_mommaps(source,filenames,force=False)
 
 def setup_lines():
 	### Malt90 Main Survey ###
