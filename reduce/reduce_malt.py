@@ -59,7 +59,9 @@ def main():
 	elif do_source:
 		sources = [source]
 	elif do_all:
-		sources = redlog.find_undone(source,vnum)
+		sources = redlog.find_undone(vnum)
+#		print(sources)
+		#print(nothing)
 	print(sources)
 	for one_source in sources:
 		do_reduction(one_source,force_list,ignore_list)
