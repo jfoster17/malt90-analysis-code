@@ -11,6 +11,7 @@ import numpy as np
 import idl_stats
 import pylab
 import numpy.ma as ma
+import reduce_malt
 
 base_data = "/DATA/MALT_1/MALT90/data/"
 
@@ -19,7 +20,14 @@ def get_velocity(source):
 	For now, use tabulated value.
 	Later, this function will find a velocity.
 	"""
-	velocity = 30.6 #Dummy for G303.930
+	path_to_vel = os.path.join(reduce_malt.sd,'malt90_velocities_year1.txt')
+	f = open(path_to_vel,'r')
+	for line in f:
+		if line.split()[0].strip() == source:
+			velocity = float(line.split()[1])
+#	velocity = 30.6 #Dummy for G303.930
+	f.close()
+	print(velocity)
 	return(velocity)
 	
 def do_source(source,lines):
