@@ -208,12 +208,12 @@ def create_source_folder(source,lines,force=False):
 			os.symlink(src,targ)
 		except OSError:
 			pass
-		momsrc = data_dir+'moment_maps/'+line+'/'+source+'_'+line+'_MEAN_mom_maps'
-		momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_MEAN_mom_maps'
-		try:
-			shutil.copytree(momsrc,momtarg)
-		except OSError:
-			pass
+		#momsrc = data_dir+'moment_maps/'+line+'/'+source+'_'+line+'_MEAN_mom_maps'
+		#momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_MEAN_mom_maps'
+		#try:
+		#	shutil.copytree(momsrc,momtarg)
+		#except OSError:
+		#	pass
 		
 		hdulist = pyfits.open(targ,mode='update')
 		prihdr = hdulist[0].header
@@ -248,6 +248,15 @@ def do_mommaps(source,lines,force=False):
 	if mommap_needed or force:
        		print("I am doing a moment map")
 		moment_map.do_source(source,lines)
+	for line in lines:
+		momsrc = data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
+		momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
+		try:
+			shutil.copytree(momsrc,momtarg)
+		except OSError:
+			print("Failed to copy moment maps")
+			pass
+
 	for file_involved in files_involved:
 		redlog.set_val(file_involved,"mommaps",vnum)
 

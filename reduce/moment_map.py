@@ -142,7 +142,7 @@ def make_moment_maps(infile,out_base,output_dir,central_velocity=False,second=Fa
 	print(output_dir)
 #	print(hdout)
 	save_maps(maps,hdout,out_base,output_dir,vel,minchan,maxchan,vwidth,"medvel")
-	
+
 	#maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad = 25)
 	#save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,"smallvel")
 
