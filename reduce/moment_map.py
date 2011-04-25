@@ -14,21 +14,25 @@ import numpy.ma as ma
 
 base_data = "/DATA/MALT_1/MALT90/data/"
 
-def get_velocity():
+def get_velocity(source):
 	"""Get a velocity for a source.
 	For now, use tabulated value.
 	Later, this function will find a velocity.
 	"""
+	velocity = 30.6 #Dummy for G303.930
 	return(velocity)
 	
 def do_source(source,lines):
-	central_velocity = get_veloicty(source)
+	print("Sourcename:")
+	print(source)
+	central_velocity = get_velocity(source)
 	create_basic_directories(lines)
 	#create_output_directories(source,lines)
 	for line in lines:
 		infile = get_filename(source,line)
-		out_base = infile[:-9]
-		out_dir = source+"_mommaps"
+		print(infile)
+		out_base = infile[:-9].replace("gridzilla","mommaps")
+		out_dir = source+"_"+line+"_mommaps"
 		try:
 			output_dir = os.path.join(base_data,"mommaps",line,out_dir)
 			os.mkdir(output_dir)
@@ -115,7 +119,8 @@ def make_moment_maps(infile,out_base,output_dir,central_velocity=False,second=Fa
 	del hdout['CRPIX3']
 	del hdout['CDELT3']
 	del hdout['CTYPE3']
-	
+	del hdout['NAXIS3']
+
 	minchan = n_edge
 	maxchan = nchan - n_edge 
 	
@@ -124,6 +129,10 @@ def make_moment_maps(infile,out_base,output_dir,central_velocity=False,second=Fa
 	#save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,"fullvel")
 	
 	maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad = 75)
+	print("Maps Made")
+	print(out_base)
+	print(output_dir)
+#	print(hdout)
 	save_maps(maps,hdout,out_base,output_dir,vel,minchan,maxchan,vwidth,"medvel")
 	
 	#maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad = 25)
@@ -137,14 +146,7 @@ def do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad):
 		minchan = max([cenchan - n_pad,n_edge])
 		maxchan = min([cenchan + n_pad,nchan-n_edge])
 	else:
-		minvel,maxvel = get_co_velocity_range(hdout)
-		hispec = np.nonzero(vel >= minvel)[0]
-		minchan = hispec[0]
-		lospec = np.nonzero(vel <= maxvel)[0]
-		maxchan = lospec[-1]
-		minchan = max([minchan,n_edge])
-		maxchan = min([maxchan,nchan-n_edge])
-		
+		pass
 	vmin = vel[minchan]/1e3
 	vmax = vel[maxchan]/1e3
 	print("Velocity Integration Limit: "+str(vmin)+' to '+str(vmax))
@@ -157,8 +159,14 @@ def do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad):
 	return(maps)
 
 def save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,name_mod):
-
-	out_base = os.path.join(out_dir,out_base)
+	
+	(head,tail) = os.path.split(out_base)
+	out_base2 = os.path.join(out_dir,tail)
+#	out_temp = os.path.join(out_base2,tail)
+	print("Base for output")
+	print(out_base2)
+#	print(out_temp)
+	out_base = out_base2
 	badind = np.where((maps['errmn'] > 1e6) | (maps['errsd'] > 1e6)) #This trims out sources with sigma_v > 1000 km/s
 	try:
 		maps['mean'][badind] = np.nan

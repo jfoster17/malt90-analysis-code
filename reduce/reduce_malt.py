@@ -15,6 +15,7 @@ import sys,os,shutil,getopt
 from subprocess import *
 import pyfits
 import ReduceLog
+import moment_map
 
 vnum = "1.5"
 #sd = '/nfs/atapplic/malt/reduce/'
@@ -86,12 +87,13 @@ def do_reduction(source,force_list=None,ignore_list=None):
 	create_source_folder(source,lines)
 
 	### Do moment maps ###
+#	print(source)
 	if 'mommaps' in force_list:
-		do_mommaps(source,filenames,force=True)
+		do_mommaps(source,lines,force=True)
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,filenames,force=False)
+		do_mommaps(source,lines,force=False)
 
 def setup_lines():
 	### Malt90 Main Survey ###
@@ -165,8 +167,8 @@ def do_gridzilla(source,filenames,lines,freqs,force=False):
 					line,str(freq),str(i),fileout,filein])
 				q.wait() 
 				try:
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
 				except IOError:
 					fail_flag = True
 					print("Failed to move flotsam files")
@@ -182,8 +184,8 @@ def do_gridzilla(source,filenames,lines,freqs,force=False):
 					line,str(freq),str(i),fileout,file1,file2])
 				q.wait()
 				try:
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam/')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
 				except IOError:
 					print("Failed to move flotsam files")
 					#This does not return a useful error
@@ -237,10 +239,18 @@ def do_mommaps(source,lines,force=False):
 
 	redlog = ReduceLog.ReduceLog()
 	files_involved = [source+"_GLat",source+"_GLon"]
-	print("I would be doing a moment map")
+
+
+	mommap_needed = False
+	for file_involved in files_involved:
+		if mommap_needed == False:
+			mommap_needed = redlog.check_val(file_involved,"mommaps",vnum) 
+	if mommap_needed or force:
+       		print("I am doing a moment map")
+		moment_map.do_source(source,lines)
 	for file_involved in files_involved:
 		redlog.set_val(file_involved,"mommaps",vnum)
-	pass
+
 
 if __name__ == '__main__':
 	main()
