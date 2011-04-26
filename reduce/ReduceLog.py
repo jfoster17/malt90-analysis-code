@@ -83,7 +83,7 @@ class ReduceLog:
 		for i, entry in enumerate(self.rename):
 			if (self.ldata[i] < vcheck) or (self.gzilla[i] < vcheck) or (self.arrange[i] < vcheck) or (self.mommaps[i] < vcheck):
 				source_try = self.source[i].rstrip('GLonGat_')
-				if source_try.startswith('G') and source_try[-2] != "_":
+				if source_try.startswith('G') and source_try[-2] != "_" and source_try[-1] != "B":
 					undone_files.append(source_try)
 		fcntl.flock(g,8) #Release lock file
 		return(undone_files)

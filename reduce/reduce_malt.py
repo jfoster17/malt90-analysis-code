@@ -4,7 +4,7 @@
 reduce_malt.py
 
 A script to reduce Malt90 data.
-Executes glish scripts which control livedata/gridzilal
+Executes glish scripts which control livedata/gridzila
 Raw-Data->renamed/source
 Livedata->livedata/line
 Gridzilla->gridzilla/line
@@ -50,17 +50,18 @@ def main():
 			source = a
 			print(source)
 		elif o == "-a":
+			#I think force does not work well with do_all
 			do_all = True
 		else:
 			assert False, "unhandled option"
 	redlog = ReduceLog.ReduceLog()
 	if do_date:
-		sources = redlog.find_files_with_date(source)
+		sources = redlog.find_files_with_date(date)
 	elif do_source:
 		sources = [source]
 	elif do_all:
 		sources = redlog.find_undone(vnum)
-#		print(sources)
+		#print(sources)
 		#print(nothing)
 	print(sources)
 	for one_source in sources:
