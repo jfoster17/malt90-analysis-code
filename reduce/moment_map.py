@@ -12,28 +12,64 @@ import idl_stats
 import pylab
 import numpy.ma as ma
 import reduce_malt
+import scipy.ndimage
 
 base_data = "/DATA/MALT_1/MALT90/data/"
 
-def get_velocity(source):
+def get_velocity(source,auto=True,direction=None):
 	"""Get a velocity for a source.
 	For now, use tabulated value.
 	Later, this function will find a velocity.
 	"""
-	path_to_vel = os.path.join(reduce_malt.sd,'malt90_velocities_year1.txt')
-	f = open(path_to_vel,'r')
-	for line in f:
-		if line.split()[0].strip() == source:
-			velocity = float(line.split()[1])
-#	velocity = 30.6 #Dummy for G303.930
-	f.close()
-	print(velocity)
+	if auto:
+		velocity = identify_velocity(source,direction=direction)
+	else:
+		path_to_vel = os.path.join(reduce_malt.sd,'malt90_velocities_year1.txt')
+		f = open(path_to_vel,'r')
+		for line in f:
+			if line.split()[0].strip() == source:
+				velocity = float(line.split()[1])
+
+		f.close()
+		#print(velocity)
 	return(velocity)
-	
-def do_source(source,lines):
+
+def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
+	"""Identify a source velocity based on HCO+
+	Later I want to add HNC
+	"""
+	try:
+		infile = get_filename(source,"hcop",direction=direction)
+		d,h = pyfits.getdata(infile,header=True)
+	except OSError:
+		print("Failed to open datacube "+infile)
+		return(0)
+	nglat = d.shape[1]
+	nglon = d.shape[2]
+	nspec = d.shape[0]
+	vel = (np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']+h['CRVAL3']
+	sf = 11
+	threshold = 4
+	channel_trim = 7
+	edge = 3
+	max_chan = np.zeros((nglat,nglon))
+	for x in range(edge,nglat-edge):
+		for y in range(edge,nglon-edge):
+			spec = d[minchan:maxchan,x,y]
+			smoothspec = smooth(spec,window_len=sf,window='hamming')
+			mean,sigma = idl_stats.iterstat(smoothspec)
+			goodsignal = np.where(smoothspec > threshold*sigma,1,0)
+			goodsignal = scipy.ndimage.binary_erosion(goodsignal,structure=np.ones(channel_trim))
+			maskedsignal = goodsignal*smoothspec
+			max_chan[x,y] = np.argmax(maskedsignal)
+	max_chan = np.extract(max_chan > 0,max_chan)
+	best_chan = int(np.median(max_chan))+minchan
+	return(vel[best_chang]/1000.)
+
+def do_source(source,lines,direction=None,auto=False):
 	print("Sourcename:")
 	print(source)
-	central_velocity = get_velocity(source)
+	central_velocity = get_velocity(source,auto,direction)
 	create_basic_directories(lines)
 	#create_output_directories(source,lines)
 	for line in lines:
@@ -58,8 +94,11 @@ def create_basic_directories(lines):
 			pass
 	
 	
-def get_filename(source,line):
-	filename = source+"_"+line+"_MEAN.fits"
+def get_filename(source,line,direction=None):
+	if not direction:
+		filename = source+"_"+line+"_MEAN.fits"
+	else:
+		filename = source+"_"+direction+"_"+line+"_MEAN.fits"
 	full_path = os.path.join(base_data,"gridzilla",line,filename)
 	return(full_path)
 
@@ -207,6 +246,39 @@ def save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,name_mod):
 					vwidth/1e3,hdout,clobber=True)
 	pyfits.writeto(out_base+'emap'+'.fits',maps['error']*
 					vwidth/1e3,hdout,clobber=True)
+
+def smooth(x,window_len=11,window='hanning'):
+	"""smooth the data using a window with requested size.
+
+	This method is based on the convolution of a scaled window with the signal.
+	The signal is prepared by introducing reflected copies of the signal 
+	(with the window size) in both ends so that transient parts are minimized
+	in the begining and end part of the output signal."""
+
+	if x.ndim != 1:
+		raise ValueError, "smooth only accepts 1 dimension arrays."
+
+	if x.size < window_len:
+		raise ValueError, "Input vector needs to be bigger than window size."
+	
+	if window_len<3:
+		return x
+
+	if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+		raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+	
+	
+	s=np.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
+						#print(len(s))
+	if window == 'flat': #moving average
+		w=ones(window_len,'d')
+	else:
+		w=eval('np.'+window+'(window_len)')
+		
+	y=np.convolve(w/w.sum(),s,mode='same')
+	return y[window_len-1:-window_len+1]
+	
+
 
 def main():
 	pass

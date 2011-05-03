@@ -102,11 +102,11 @@ def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone
 	else:
 		filenames = [source+"_GLat",source+"_GLon"]
 	if 'mommaps' in force_list:
-		do_mommaps(source,filenames,lines,force=True,quicklook=quicklook)
+		do_mommaps(source,filenames,lines,force=True,quicklook=quicklook,direction=onlyone)
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,filenames,lines,force=False,quicklook=quicklook)
+		do_mommaps(source,filenames,lines,force=False,quicklook=quicklook,direction=onlyone)
 
 def setup_lines(quicklook=False):
 	if quicklook:
@@ -257,7 +257,7 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		except:
 			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
 	
-def do_mommaps(source,filenames,lines,force=False,quicklook=False):
+def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None):
 	"""Make moment maps for source and place them correctly
 	Determine a source velocity (currently from table)
 	Make moment map for GLon, GLat, combined in mommaps/line
@@ -272,7 +272,7 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 			mommap_needed = redlog.check_val(file_involved,"mommaps",vnum) 
 	if mommap_needed or force:
        		print("I am doing a moment map")
-		moment_map.do_source(source,lines)
+		moment_map.do_source(source,lines,direction=direction)
 	for line in lines:
 		momsrc = data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
 		momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
