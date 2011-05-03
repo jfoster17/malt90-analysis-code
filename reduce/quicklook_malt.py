@@ -28,23 +28,23 @@ def main():
 		print str(err)
 		print __doc__
 		sys.exit(2)
-	onlyone = None
+	direction = None
 	for o,a in opts:
 		if o == "-s":
 			source = a
 		if o == "-d":
-			onlyone = a
+			direction = a
 
 	#Make sure that log is up-to-date.
 	#This step is quick, so just do +/-
 	#on current UT. 
 	now_utc = datetime.datetime.utcnow()
 	today = datetime.date(now_utc.year,now_utc.month,now_utc.day)
-	plus1 = today + timedelta(days=1)
-	minu1 = today - timedetal(days=1)
+	plus1 = today + datetime.timedelta(days=1)
+	minu1 = today - datetime.timedelta(days=1)
 
-	for date in [today,plus1,minu1]:
-		files_to_process = proprocess_malt.get_new_files(date.isoformat(),in_middle_of_obs = True)
+	for dates in [today,plus1,minu1]:
+		files_to_process = preprocess_malt.get_new_files(dates.isoformat(),in_middle_of_obs = True)
 		preprocess_malt.rename_files(files_to_process)
 		
 	#redlog = ReudceLog.ReduceLog()

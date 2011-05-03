@@ -68,7 +68,8 @@ def main():
 		do_reduction(one_source,force_list,ignore_list)
 
 def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone=None):
-	lines,freqs = setup_lines(quicklook)
+	lines,freqs,ifs = setup_lines(quicklook)
+
 	### Do Livedata ###
 	if onlyone:
 		filenames = [source+'_'+onlyone+'.rpf']
@@ -86,11 +87,11 @@ def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone
 	else:
 		filenames = [source+'_GLat.sdfits',source+'_GLon.sdfits']
 	if 'gzilla' in force_list:
-		do_gridzilla(source,filenames,lines,freqs,force=True,quicklook=quicklook)
+		do_gridzilla(source,filenames,lines,freqs,ifs,force=True,quicklook=quicklook)
 	elif 'gzilla' in ignore_list:
 		pass
 	else:
-		do_gridzilla(source,filenames,lines,freqs,force=False,quicklook=quicklook)
+		do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=quicklook)
 	### Do Reorganization ###
 	### I think it is fine to always do this step ###
 	create_source_folder(source,lines,quicklook)
@@ -112,6 +113,7 @@ def setup_lines(quicklook=False):
 		### Lines to use for quick look ###
 		lines = ["hcop"]
 		freqs = [89188.526]
+		ifs   = [9]
 	else:
         	### Malt90 Main Survey ###
 		lines = ["n2hp","13cs","h41a","ch3cn",
@@ -122,6 +124,7 @@ def setup_lines(quicklook=False):
 			 90978.989, 90926.036, 90663.572, 90593.059, 
 			 89188.526, 88631.847, 88239.027, 87925.238, 
 			 87316.925, 87090.850, 86847.010, 86754.330]	
+		ifs   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 	### Malt90 backward sources (first day) st###
 #	lines = ["ch3cn","h41a","13cs","n2hp",
 #		 "hc13ccn","hnc","13c34s","hc3n",
@@ -133,7 +136,7 @@ def setup_lines(quicklook=False):
 #		 87925.238, 88239.027,  88631.847, 89188.526,
 #		 87316.925, 87090.850, 86847.010, 86754.330]	
 
-	return(lines,freqs)
+	return(lines,freqs,ifs)
 
 def make_dirs(dirname,lines):
 	try:
@@ -159,13 +162,17 @@ def do_livedata(filenames,lines,force=False,quicklook=False):
 			#print(ldata_done)
 			if ldata_needed or force:
 				#I think I could use check_call here to see if this dies
-				p = Popen(["glish",'-l',sd+'ldata_malt90.g','-plain',filename])
-				p.wait()
+				if not quicklook:
+					p = Popen(["glish",'-l',sd+'ldata_malt90.g','-plain',filename])
+					p.wait()
+				else:
+					p = Popen(["glish",'-l',sd+'ldata_malt90_ql.g','-plain',filename])
+					p.wait()
 				if not quicklook:
 					redlog.set_val(ftemp.replace('.rpf',''),"ldata",vnum)
 		
 
-def do_gridzilla(source,filenames,lines,freqs,force=False,quicklook=False):
+def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 	# print(over_gzilla_both)
 	make_dirs("gridzilla",lines)
 	redlog = ReduceLog.ReduceLog()
@@ -177,13 +184,13 @@ def do_gridzilla(source,filenames,lines,freqs,force=False,quicklook=False):
 	for fn in filenames:
 		fail_flag = False
 		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),"gzilla",vnum) 
-		for i,(line,freq) in enumerate(zip(lines,freqs)):
+		for i,line,freq in zip(ifs,lines,freqs):
 			filein  = fn.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = fn.replace(".sdfits","")+'_'+line
 			#print(filein)
 			if gzilla_needed or force:
 				q = Popen(["glish",'-l',sd+'gzill_malt90.g',\
-					line,str(freq),str(i),fileout,filein])
+					line,str(freq),str(i-1),fileout,filein])
 				q.wait() 
 				try:
 					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
@@ -194,13 +201,13 @@ def do_gridzilla(source,filenames,lines,freqs,force=False,quicklook=False):
 		if (not fail_flag) and (not quicklook):
 			redlog.set_val(fn.replace(".sdfits",""),"gzilla",vnum)
 	if len(filenames) == 2:
-		for i,(line,freq) in enumerate(zip(lines,freqs)):
+		for i,line,freq in zip(ifs,lines,freqs):
 			file1   = fn1.replace(".sdfits","")+'_'+line+'.sdfits'
 			file2   = fn2.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = source+'_'+line
 			if gzilla_do1 or gzilla_do2 or force:
 				q = Popen(["glish",'-l',sd+'gzill_malt90.g',\
-					line,str(freq),str(i),fileout,file1,file2])
+					line,str(freq),str(i-1),fileout,file1,file2])
 				q.wait()
 				try:
 					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
