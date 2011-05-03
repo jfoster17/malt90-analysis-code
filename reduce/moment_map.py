@@ -148,13 +148,12 @@ def make_moment_maps(infile,out_base,output_dir,central_velocity=False,second=Fa
 
 def do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad):
 	"""Make a moment map once we know central velocity."""
-	if central_velocity: #This signals a good velocity
-		hispec = np.nonzero(vel >= central_velocity)[0]
-		cenchan = hispec[0]
-		minchan = max([cenchan - n_pad,n_edge])
-		maxchan = min([cenchan + n_pad,nchan-n_edge])
-	else:
-		pass
+
+	hispec = np.nonzero(vel >= central_velocity)[0]
+	cenchan = hispec[0]
+	minchan = max([cenchan - n_pad,n_edge])
+	maxchan = min([cenchan + n_pad,nchan-n_edge])
+
 	vmin = vel[minchan]/1e3
 	vmax = vel[maxchan]/1e3
 	print("Velocity Integration Limit: "+str(vmin)+' to '+str(vmax))

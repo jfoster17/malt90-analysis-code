@@ -67,47 +67,61 @@ def main():
 	for one_source in sources:
 		do_reduction(one_source,force_list,ignore_list)
 
-def do_reduction(source,force_list=None,ignore_list=None):
-	lines,freqs = setup_lines()
+def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone=None):
+	lines,freqs = setup_lines(quicklook)
 	### Do Livedata ###
-	filenames = [source+'_GLat.rpf',source+'_GLon.rpf']
+	if onlyone:
+		filenames = [source+'_'+onlyone+'.rpf']
+	else:
+		filenames = [source+'_GLat.rpf',source+'_GLon.rpf']
 	if 'ldata' in force_list:
-		do_livedata(filenames,lines,force=True)
+		do_livedata(filenames,lines,force=True,quicklook)
 	elif 'ldata' in ignore_list:
 		pass
 	else:
-		do_livedata(filenames,lines,force=False)
+		do_livedata(filenames,lines,force=False,quicklook)
 	### Do Gridzilla ###
-	filenames = [source+'_GLat.sdfits',source+'_GLon.sdfits']
+	if onlyone:
+		filenames = [source+'_'+onlyone+'.sdfits']
+	else:
+		filenames = [source+'_GLat.sdfits',source+'_GLon.sdfits']
 	if 'gzilla' in force_list:
-		do_gridzilla(source,filenames,lines,freqs,force=True)
+		do_gridzilla(source,filenames,lines,freqs,force=True,quicklook)
 	elif 'gzilla' in ignore_list:
 		pass
 	else:
-		do_gridzilla(source,filenames,lines,freqs,force=False)
+		do_gridzilla(source,filenames,lines,freqs,force=False,quicklook)
 	### Do Reorganization ###
 	### I think it is fine to always do this step ###
-	create_source_folder(source,lines)
+	create_source_folder(source,lines,quicklook)
 
 	### Do moment maps ###
-#	print(source)
+	if onlyone:
+		filenames = [source+'_'+onlyone]
+	else:
+		filenames = [source+"_GLat",source+"_GLon"]
 	if 'mommaps' in force_list:
-		do_mommaps(source,lines,force=True)
+		do_mommaps(source,filenames,lines,force=True,quicklook)
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,lines,force=False)
+		do_mommaps(source,filenames,lines,force=False,quicklook)
 
-def setup_lines():
-	### Malt90 Main Survey ###
-	lines = ["n2hp","13cs","h41a","ch3cn",
-		 "hc3n","13c34s","hnc","hc13ccn",
-	         "hcop","hcn","hnco413","hnco404",
-	         "c2h","hn13c","sio","h13cop"]
-	freqs = [93173.772, 92494.303, 92034.475, 91985.316, 
-		 90978.989, 90926.036, 90663.572, 90593.059, 
-		 89188.526, 88631.847, 88239.027, 87925.238, 
-		 87316.925, 87090.850, 86847.010, 86754.330]	
+def setup_lines(quicklook=False):
+	if quicklook:
+		### Lines to use for quick look ###
+		lines = ["hcop"]
+		freqs = [89188.526]
+	else:
+        	### Malt90 Main Survey ###
+		lines = ["n2hp","13cs","h41a","ch3cn",
+			 "hc3n","13c34s","hnc","hc13ccn",
+			 "hcop","hcn","hnco413","hnco404",
+			 "c2h","hn13c","sio","h13cop"]
+		freqs = [93173.772, 92494.303, 92034.475, 91985.316, 
+			 90978.989, 90926.036, 90663.572, 90593.059, 
+			 89188.526, 88631.847, 88239.027, 87925.238, 
+			 87316.925, 87090.850, 86847.010, 86754.330]	
 	### Malt90 backward sources (first day) st###
 #	lines = ["ch3cn","h41a","13cs","n2hp",
 #		 "hc13ccn","hnc","13c34s","hc3n",
@@ -132,7 +146,7 @@ def make_dirs(dirname,lines):
 		except OSError:
 			pass
 
-def do_livedata(filenames,lines,force=False):
+def do_livedata(filenames,lines,force=False,quicklook=False):
 	make_dirs("livedata",lines)
 	redlog = ReduceLog.ReduceLog()
 	for filename in filenames:
@@ -144,12 +158,14 @@ def do_livedata(filenames,lines,force=False):
 			#print("Ldata")
 			#print(ldata_done)
 			if ldata_needed or force:
+				#I think I could use check_call here to see if this dies
 				p = Popen(["glish",'-l',sd+'ldata_malt90.g','-plain',filename])
 				p.wait()
-				redlog.set_val(ftemp.replace('.rpf',''),"ldata",vnum)
+				if not quicklook:
+					redlog.set_val(ftemp.replace('.rpf',''),"ldata",vnum)
 		
 
-def do_gridzilla(source,filenames,lines,freqs,force=False):
+def do_gridzilla(source,filenames,lines,freqs,force=False,quicklook=False):
 	# print(over_gzilla_both)
 	make_dirs("gridzilla",lines)
 	redlog = ReduceLog.ReduceLog()
@@ -175,7 +191,7 @@ def do_gridzilla(source,filenames,lines,freqs,force=False):
 				except IOError:
 					fail_flag = True
 					print("Failed to move flotsam files")
-		if not fail_flag:
+		if (not fail_flag) and (not quicklook):
 			redlog.set_val(fn.replace(".sdfits",""),"gzilla",vnum)
 	if len(filenames) == 2:
 		for i,(line,freq) in enumerate(zip(lines,freqs)):
@@ -192,7 +208,7 @@ def do_gridzilla(source,filenames,lines,freqs,force=False):
 				except IOError:
 					print("Failed to move flotsam files")
 					#This does not return a useful error
-def create_source_folder(source,lines,force=False):
+def create_source_folder(source,lines,force=False,quicklook=False):
 	"""Create a folder of symlinks for each source"""
 	redlog = ReduceLog.ReduceLog()
 	try:
@@ -229,11 +245,12 @@ def create_source_folder(source,lines,force=False):
 	for file_involved in files_involved:
 		#print(file_involved)
 		try:
-			redlog.set_val(file_involved,"arrange",vnum)
+			if not quicklook:
+				redlog.set_val(file_involved,"arrange",vnum)
 		except:
 			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
 	
-def do_mommaps(source,lines,force=False):
+def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 	"""Make moment maps for source and place them correctly
 	Determine a source velocity (currently from table)
 	Make moment map for GLon, GLat, combined in mommaps/line
@@ -241,11 +258,9 @@ def do_mommaps(source,lines,force=False):
 	"""
 
 	redlog = ReduceLog.ReduceLog()
-	files_involved = [source+"_GLat",source+"_GLon"]
-
 
 	mommap_needed = False
-	for file_involved in files_involved:
+	for file_involved in filenames:
 		if mommap_needed == False:
 			mommap_needed = redlog.check_val(file_involved,"mommaps",vnum) 
 	if mommap_needed or force:
@@ -260,8 +275,9 @@ def do_mommaps(source,lines,force=False):
 			print("Failed to copy moment maps")
 			pass
 
-	for file_involved in files_involved:
-		redlog.set_val(file_involved,"mommaps",vnum)
+	for file_involved in filenames:
+		if not quicklook:
+			redlog.set_val(file_involved,"mommaps",vnum)
 
 
 if __name__ == '__main__':
