@@ -272,7 +272,10 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None
 			mommap_needed = redlog.check_val(file_involved,"mommaps",vnum) 
 	if mommap_needed or force:
        		print("I am doing a moment map")
-		moment_map.do_source(source,lines,direction=direction)
+		if quicklook:
+			moment_map.do_source(source,lines,direction=direction,auto=True)
+		else:
+			moment_map.do_source(source,lines,direction=direction)
 	for line in lines:
 		momsrc = data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
 		momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'

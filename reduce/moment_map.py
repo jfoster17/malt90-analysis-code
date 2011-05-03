@@ -21,6 +21,7 @@ def get_velocity(source,auto=True,direction=None):
 	For now, use tabulated value.
 	Later, this function will find a velocity.
 	"""
+	
 	if auto:
 		velocity = identify_velocity(source,direction=direction)
 	else:
@@ -64,7 +65,7 @@ def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
 			max_chan[x,y] = np.argmax(maskedsignal)
 	max_chan = np.extract(max_chan > 0,max_chan)
 	best_chan = int(np.median(max_chan))+minchan
-	return(vel[best_chang]/1000.)
+	return(vel[best_chan]/1000.)
 
 def do_source(source,lines,direction=None,auto=False):
 	print("Sourcename:")
