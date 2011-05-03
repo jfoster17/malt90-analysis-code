@@ -29,7 +29,7 @@ Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in 
 
 """
 import sys, os, glob, shutil
-from asap import *
+#from asap import *
 import ReduceLog
 
 #sd = '/nfs/atapplic/malt/reduce/'
@@ -73,7 +73,7 @@ def rename_files(filelist):
 	"""Load files into ASAP. Smooth references. Lookup name/check size and rename"""
 	redlog = ReduceLog.ReduceLog()
 	for new_file in filelist:
-		s = scantable(data_dir+new_file,average=False)	
+		#s = scantable(data_dir+new_file,average=False)	
 		id,source_for_log = redlog.get_name(new_file)
 		renamed_file = source_for_log+".rpf"
 		print("Saving "+new_file+" as "+source_for_log+"...")

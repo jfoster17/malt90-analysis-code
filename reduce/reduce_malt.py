@@ -75,22 +75,22 @@ def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone
 	else:
 		filenames = [source+'_GLat.rpf',source+'_GLon.rpf']
 	if 'ldata' in force_list:
-		do_livedata(filenames,lines,force=True,quicklook)
+		do_livedata(filenames,lines,force=True,quicklook=quicklook)
 	elif 'ldata' in ignore_list:
 		pass
 	else:
-		do_livedata(filenames,lines,force=False,quicklook)
+		do_livedata(filenames,lines,force=False,quicklook=quicklook)
 	### Do Gridzilla ###
 	if onlyone:
 		filenames = [source+'_'+onlyone+'.sdfits']
 	else:
 		filenames = [source+'_GLat.sdfits',source+'_GLon.sdfits']
 	if 'gzilla' in force_list:
-		do_gridzilla(source,filenames,lines,freqs,force=True,quicklook)
+		do_gridzilla(source,filenames,lines,freqs,force=True,quicklook=quicklook)
 	elif 'gzilla' in ignore_list:
 		pass
 	else:
-		do_gridzilla(source,filenames,lines,freqs,force=False,quicklook)
+		do_gridzilla(source,filenames,lines,freqs,force=False,quicklook=quicklook)
 	### Do Reorganization ###
 	### I think it is fine to always do this step ###
 	create_source_folder(source,lines,quicklook)
@@ -101,11 +101,11 @@ def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone
 	else:
 		filenames = [source+"_GLat",source+"_GLon"]
 	if 'mommaps' in force_list:
-		do_mommaps(source,filenames,lines,force=True,quicklook)
+		do_mommaps(source,filenames,lines,force=True,quicklook=quicklook)
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,filenames,lines,force=False,quicklook)
+		do_mommaps(source,filenames,lines,force=False,quicklook=quicklook)
 
 def setup_lines(quicklook=False):
 	if quicklook:

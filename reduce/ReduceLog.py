@@ -1,10 +1,9 @@
 
 import glob
-from asap import *
 import os
 import fcntl
 import string
-from subprocess import *
+import subprocess
 
 class ReduceLog:
 	def __init__(self):
@@ -140,10 +139,11 @@ class ReduceLog:
 			if os.path.basename(file) in self.fname:
 				print("Skipping file..."+os.path.basename(file))
 			else:
-				s = scantable(file,average=False)	
-				possible_names = s.get_sourcename()
-				try:
-					source_name = possible_names[0].rstrip('_R')
+				p = subprocess.Popen(["rpfhdr",file],stdout=subprocess.PIPE).communicate()[0]
+				a = p.find("CALCODE")
+				possible_name = p[a+30:a+44]
+			       	try:
+					source_name = possible_name.strip().rstrip('_R')[1:]
 				except IndexError:
 					source_name = '--'
 				source = ''
