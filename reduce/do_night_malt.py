@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-do_night.py fully processes a night of data.
+do_night_malt.py fully processes a night of data.
 Should be run at the end of a night
 after rsyncing data across (if required).
 """
