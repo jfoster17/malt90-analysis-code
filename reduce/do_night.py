@@ -6,7 +6,6 @@ Should be run at the end of a night
 after rsyncing data across (if required).
 """
 import sys
-#from subprocess import *
 import preprocess_malt, reduce_malt, ReduceLog
 from datetime import date, timedelta
 
@@ -29,8 +28,3 @@ for date in [today]:
 	print(sources)
 	for one_source in sources:
 		reduce_malt.do_reduction(one_source)
-
-#p = Popen(["preprocess_malt.py",night])
-#p.wait()
-#q = Popen(["reduce_malt.py",night])
-#q.wait()

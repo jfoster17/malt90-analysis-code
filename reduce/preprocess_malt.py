@@ -29,14 +29,9 @@ Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in 
 
 """
 import sys, os, glob, shutil
-#from asap import *
 import ReduceLog
+import malt_params as malt
 
-#sd = '/nfs/atapplic/malt/reduce/'
-sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/'
-rename_dir = '/DATA/MALT_1/MALT90/data/renamed/'
-data_dir = '/DATA/MALT_1/MALT90/raw_data/'
-vnum = "1.5"
 
 def main():
 	argument = None
@@ -67,7 +62,7 @@ def get_new_files(date = "all",in_middle_of_obs=False):
 		datestring = date
 	else:
 		datestring = "20" #This will always be in a date
-	return(redlog.find_new_files(vnum,datestring))	
+	return(redlog.find_new_files(malt.vnum,datestring))	
 
 def rename_files(filelist):
 	"""Load files into ASAP. Smooth references. Lookup name/check size and rename"""
@@ -78,9 +73,9 @@ def rename_files(filelist):
 		renamed_file = source_for_log+".rpf"
 		print("Saving "+new_file+" as "+source_for_log+"...")
 		#s.save(smoothdir+source_for_log+'.sdfits','SDFITS',overwrite=True)
-		shutil.copyfile(data_dir+new_file,rename_dir+source_for_log+".rpf")
+		shutil.copyfile(malt.source_dir+new_file,malt.rename_dir+source_for_log+".rpf")
 		
-		redlog.set_val(source_for_log,"rename",vnum)
+		redlog.set_val(source_for_log,"rename",malt.vnum)
 		print("")
 
 

@@ -4,16 +4,15 @@ import os
 import fcntl
 import string
 import subprocess
+import malt_params as malt
 
 class ReduceLog:
 	def __init__(self):
-		self.location = '/DATA/MALT_1/MALT90/reduction_log.txt'
-		self.lock = '/DATA/MALT_1/MALT90/lock.txt'
-#		self.srcdir = '/DATA/ARCHIVE_1/Mopra/'		
-#		self.sd = '/nfs/atapplic/malt/reduce/'
-		self.sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/'
-		self.source_dir = '/DATA/MALT_1/MALT90/raw_data/'
-		self.class_file = self.sd+'Malt90Catalog_classifications_v9.txt'
+		self.location = malt.log_location
+		self.lock = malt.lock
+		self.sd = malt.sd
+		self.source_dir = malt.source_dir
+		self.class_file = malt.classification_file
 		self.fname = []
 		self.id = []
 		self.source = []
@@ -205,7 +204,7 @@ class ReduceLog:
 					self.mommaps.append("0")
 				print(os.path.basename(file)+'\t'+source)
 		self.save()			
-		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' /DATA/MALT_1/MALT90/reduction_log.txt > /DATA/MALT_1/MALT90/input_reduction_log.txt''')
+		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' '''+malt.log_location+'''  > '''+malt.base'''input_reduction_log.txt''')
 		fcntl.flock(g,8) #Release lock file
 
 	def read(self):

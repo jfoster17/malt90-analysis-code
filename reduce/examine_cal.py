@@ -4,8 +4,9 @@ from asap import *
 import os,sys
 from subprocess import *
 import glob
+import malt_params as malt
 
-data_dir = "/DATA/MALT_1/MALT90/cal/"
+malt.cal_dir
 
 #Malt90 line parameters
 lines = ["n2hp","13cs","h41a","ch3cn",\

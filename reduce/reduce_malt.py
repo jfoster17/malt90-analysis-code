@@ -16,11 +16,7 @@ from subprocess import *
 import pyfits
 import ReduceLog
 import moment_map
-
-vnum = "1.5"
-#sd = '/nfs/atapplic/malt/reduce/'
-sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/' #Seems to be new location
-data_dir = '/DATA/MALT_1/MALT90/data/'
+import malt_params as malt
 
 def main():
 	try:
@@ -60,7 +56,7 @@ def main():
 	elif do_source:
 		sources = [source]
 	elif do_all:
-		sources = redlog.find_undone(vnum)
+		sources = redlog.find_undone(malt.vnum)
 		#print(sources)
 		#print(nothing)
 	print(sources)
@@ -140,12 +136,12 @@ def setup_lines(quicklook=False):
 
 def make_dirs(dirname,lines):
 	try:
-		os.mkdir(data_dir+dirname)
+		os.mkdir(malt.data_dir+dirname)
 	except OSError:
 		pass
 	for line in lines:
 		try:
-			os.mkdir(data_dir+dirname+"/"+line)
+			os.mkdir(malt.data_dir+dirname+"/"+line)
 		except OSError:
 			pass
 
@@ -154,22 +150,22 @@ def do_livedata(filenames,lines,force=False,quicklook=False):
 	redlog = ReduceLog.ReduceLog()
 	for filename in filenames:
 		print(filename)
-		if os.path.exists(data_dir+'renamed/'+filename):
+		if os.path.exists(malt.data_dir+'renamed/'+filename):
 			#print(filename)
 			ftemp = filename
-			ldata_needed = redlog.check_val(ftemp.replace('.rpf',''),"ldata",vnum)
+			ldata_needed = redlog.check_val(ftemp.replace('.rpf',''),"ldata",malt.vnum)
 			#print("Ldata")
 			#print(ldata_done)
 			if ldata_needed or force:
 				#I think I could use check_call here to see if this dies
 				if not quicklook:
-					p = Popen(["glish",'-l',sd+'ldata_malt90.g','-plain',filename])
+					p = Popen(["glish",'-l',malt.sd+'ldata_malt90.g','-plain',filename])
 					p.wait()
 				else:
-					p = Popen(["glish",'-l',sd+'ldata_malt90_ql.g','-plain',filename])
+					p = Popen(["glish",'-l',malt.sd+'ldata_malt90_ql.g','-plain',filename])
 					p.wait()
 				if not quicklook:
-					redlog.set_val(ftemp.replace('.rpf',''),"ldata",vnum)
+					redlog.set_val(ftemp.replace('.rpf',''),"ldata",malt.vnum)
 		
 
 def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
@@ -179,39 +175,39 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 	if len(filenames) == 2:
 		fn1 = filenames[0]
 		fn2 = filenames[1]
-		gzilla_do1 = redlog.check_val(fn1.replace(".sdfits",""),"gzilla",vnum) 
-		gzilla_do2 = redlog.check_val(fn2.replace(".sdfits",""),"gzilla",vnum) 
+		gzilla_do1 = redlog.check_val(fn1.replace(".sdfits",""),"gzilla",malt.vnum) 
+		gzilla_do2 = redlog.check_val(fn2.replace(".sdfits",""),"gzilla",malt.vnum) 
 	for fn in filenames:
 		fail_flag = False
-		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),"gzilla",vnum) 
+		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),"gzilla",malt.vnum) 
 		for i,line,freq in zip(ifs,lines,freqs):
 			filein  = fn.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = fn.replace(".sdfits","")+'_'+line
 			#print(filein)
 			if gzilla_needed or force:
-				q = Popen(["glish",'-l',sd+'gzill_malt90.g',\
+				q = Popen(["glish",'-l',malt.sd+'gzill_malt90.g',\
 					line,str(freq),str(i-1),fileout,filein])
 				q.wait() 
 				try:
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
 				except IOError:
 					fail_flag = True
 					print("Failed to move flotsam files")
 		if (not fail_flag) and (not quicklook):
-			redlog.set_val(fn.replace(".sdfits",""),"gzilla",vnum)
+			redlog.set_val(fn.replace(".sdfits",""),"gzilla",malt.vnum)
 	if len(filenames) == 2:
 		for i,line,freq in zip(ifs,lines,freqs):
 			file1   = fn1.replace(".sdfits","")+'_'+line+'.sdfits'
 			file2   = fn2.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = source+'_'+line
 			if gzilla_do1 or gzilla_do2 or force:
-				q = Popen(["glish",'-l',sd+'gzill_malt90.g',\
+				q = Popen(["glish",'-l',malt.sd+'gzill_malt90.g',\
 					line,str(freq),str(i-1),fileout,file1,file2])
 				q.wait()
 				try:
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
-					shutil.move(data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
 				except IOError:
 					print("Failed to move flotsam files")
 					#This does not return a useful error
@@ -219,17 +215,17 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 	"""Create a folder of symlinks for each source"""
 	redlog = ReduceLog.ReduceLog()
 	try:
-		os.mkdir(data_dir+"sources")
+		os.mkdir(malt.data_dir+"sources")
 	except OSError:
 		pass
 	for line in lines:
 		try:
-			os.mkdir(data_dir+'sources/'+source)
+			os.mkdir(malt.data_dir+'sources/'+source)
 		except OSError:
 			pass
 		filename = source+'_'+line+'_MEAN.fits'
-		src = data_dir+'gridzilla/'+line+'/'+filename
-		targ = data_dir+'sources/'+source+'/'+filename
+		src  = malt.data_dir+'gridzilla/'+line+'/'+filename
+		targ = malt.data_dir+'sources/'+source+'/'+filename
 		try:
 			os.symlink(src,targ)
 		except OSError:
@@ -243,7 +239,7 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		
 		hdulist = pyfits.open(targ,mode='update')
 		prihdr = hdulist[0].header
-		prihdr.update('M90PIPEV',vnum,'Malt90 Pipeline Version')
+		prihdr.update('M90PIPEV',malt.vnum,'Malt90 Pipeline Version')
 		prihdr.update('BUNIT','K','Antenna Temperature')
 		hdulist.flush()
 		#except:
@@ -253,7 +249,7 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		#print(file_involved)
 		try:
 			if not quicklook:
-				redlog.set_val(file_involved,"arrange",vnum)
+				redlog.set_val(file_involved,"arrange",malt.vnum)
 		except:
 			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
 	
@@ -269,7 +265,7 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None
 	mommap_needed = False
 	for file_involved in filenames:
 		if mommap_needed == False:
-			mommap_needed = redlog.check_val(file_involved,"mommaps",vnum) 
+			mommap_needed = redlog.check_val(file_involved,"mommaps",malt.vnum) 
 	if mommap_needed or force:
        		print("I am doing a moment map")
 		if quicklook:
@@ -277,8 +273,8 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None
 		else:
 			moment_map.do_source(source,lines,direction=direction)
 	for line in lines:
-		momsrc = data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
-		momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
+		momsrc = malt.data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
+		momtarg = malt.data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
 		try:
 			shutil.copytree(momsrc,momtarg)
 		except OSError:
@@ -287,7 +283,7 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None
 
 	for file_involved in filenames:
 		if not quicklook:
-			redlog.set_val(file_involved,"mommaps",vnum)
+			redlog.set_val(file_involved,"mommaps",malt.vnum)
 
 
 if __name__ == '__main__':

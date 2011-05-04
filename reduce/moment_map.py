@@ -4,28 +4,25 @@
 moment_map.py
 """
 
-import sys
-import os
+import sys,os
 import pyfits
 import numpy as np
-import idl_stats
-import pylab
 import numpy.ma as ma
-import reduce_malt
 import scipy.ndimage
-
-base_data = "/DATA/MALT_1/MALT90/data/"
+import pylab
+import idl_stats
+import malt_params as malt
 
 def get_velocity(source,auto=True,direction=None):
 	"""Get a velocity for a source.
 	For now, use tabulated value.
 	Later, this function will find a velocity.
 	"""
-	
+	auto = False
 	if auto:
 		velocity = identify_velocity(source,direction=direction)
 	else:
-		path_to_vel = os.path.join(reduce_malt.sd,'malt90_velocities_year1.txt')
+		path_to_vel = os.path.join(malt.sd,'malt90_velocities_year1.txt')
 		f = open(path_to_vel,'r')
 		for line in f:
 			if line.split()[0].strip() == source:
@@ -79,7 +76,7 @@ def do_source(source,lines,direction=None,auto=False):
 		out_base = infile[:-9].replace("gridzilla","mommaps")
 		out_dir = source+"_"+line+"_mommaps"
 		try:
-			output_dir = os.path.join(base_data,"mommaps",line,out_dir)
+			output_dir = os.path.join(malt.data_dir,"mommaps",line,out_dir)
 			os.mkdir(output_dir)
 		except OSError:
 			pass
@@ -89,7 +86,7 @@ def create_basic_directories(lines):
 	"""Create subdirectories under mommaps"""
 	for line in lines:
 		try:
-			moment_dir = os.path.join(base_data,"mommaps",line)
+			moment_dir = os.path.join(malt.data_dir,"mommaps",line)
 			os.mkdir(moment_dir)
 		except OSError:
 			pass
@@ -100,7 +97,7 @@ def get_filename(source,line,direction=None):
 		filename = source+"_"+line+"_MEAN.fits"
 	else:
 		filename = source+"_"+direction+"_"+line+"_MEAN.fits"
-	full_path = os.path.join(base_data,"gridzilla",line,filename)
+	full_path = os.path.join(malt.data_dir,"gridzilla",line,filename)
 	return(full_path)
 
 def calculate_moments(d,minchan=False,maxchan=False,vel=False,bestmask=False,mask=False):
