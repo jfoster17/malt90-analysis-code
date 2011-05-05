@@ -63,50 +63,51 @@ def make_verification_plots(source,direction=None):
 	"""Make an image of the 0th moment map
 	and of the sepctrum at the peak position with
 	a line indicating the central velocity"""
+	lines = ["hcop","hnc"]
+
 	if not direction:
 		direction = ""
 	else:
 		direction = "_"+direction
-
-	cube,h = pyfits.getdata(malt.data_dir+'gridzilla/hcop/'+source+direction+"_hcop_MEAN.fits",header=True)
-
-	snr = np.nan_to_num(pyfits.getdata(malt.data_dir+'mommaps/hcop/'+source+direction+"_hcop_mommaps/"+source+direction+"_hcop_snr0.fits"))
-	mask = np.zeros(snr.shape)
-	mask[2:28,2:28] = 1
-	d,hmom = pyfits.getdata(malt.data_dir+'mommaps/hcop/'+source+direction+"_hcop_mommaps/"+source+direction+"_hcop_mom0.fits",header=True)
-	plt.imshow(d*mask)
-	a = plt.colorbar()
-	a.set_label("K km/s")
-	plt.title(source+" "+direction+" HCO+ integrated intenxity")
-	plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
-	plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
-	plt.savefig(malt.data_dir+'verification/'+source+"_hcop_mom0"+direction+".png")
+	for line in lines:
+		cube,h = pyfits.getdata(malt.data_dir+'gridzilla/'+line+'/'+source+direction+"_"+line+"_MEAN.fits",header=True)
+		snr = np.nan_to_num(pyfits.getdata(malt.data_dir+'mommaps/'+line+'/'+source+direction+"_"+line+"_mommaps/"+source+direction+"_"+line+"_snr0.fits"))
+		mask = np.zeros(snr.shape)
+		mask[2:28,2:28] = 1
+		d,hmom = pyfits.getdata(malt.data_dir+'mommaps/'+line+'/'+source+direction+"_"+line+"_mommaps/"+source+direction+"_"+line+"_mom0.fits",header=True)
+		plt.imshow(d*mask)
+		a = plt.colorbar()
+		a.set_label("K km/s")
+		plt.title(source+" "+direction+" "+line+" integrated intenxity")
+		plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
+		plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
+		plt.savefig(malt.data_dir+'verification/'+source+"_"+line+"_mom0"+direction+".png")
 	
-	nspec = h['NAXIS3']
-	vmin = hmom['VMIN']
-	vmax = hmom['VMAX']
-	vcen = np.average([vmin,vmax])
-	vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']+h['CRVAL3'])/1e3
+		nspec = h['NAXIS3']
+		vmin = hmom['VMIN']
+		vmax = hmom['VMAX']
+		vcen = np.average([vmin,vmax])
+		vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']+h['CRVAL3'])/1e3
 	
-	snr_smooth = idl_stats.blur_image(snr,3)
+		snr_smooth = idl_stats.blur_image(snr,3)
 	
-	peak_pix = np.argmax(snr_smooth*mask)
-	pid = np.unravel_index(peak_pix,snr.shape)
+		peak_pix = np.argmax(snr_smooth*mask)
+		pid = np.unravel_index(peak_pix,snr.shape)
 
-	print(pid)
-	spectra = idl_stats.smooth(cube[...,pid[0],pid[1]])
-	print(spectra)
-	print(len(vel),len(spectra))
-
-	plt.clf()
-	plt.plot(vel,spectra)
-	plt.title(source+" "+direction+" HCO+ at maximum integrated intensity")
-	plt.axvline(x=vcen,color='r')
-	plt.xlim((vcen-100,vcen+100))
-	plt.xlabel("Velocity [km/s]")
-	plt.ylabel("T [K]")
-	plt.savefig(malt.base+'data/verification/'+source+"_hcop_velcheck"+direction+".png")
-
+		#print(pid)
+		spectra = idl_stats.smooth(cube[...,pid[0],pid[1]])
+		#print(spectra)
+		#print(len(vel),len(spectra))
+	
+		plt.clf()
+		plt.plot(vel,spectra)
+		plt.title(source+" "+direction+" "+line+" at maximum integrated intensity")
+		plt.axvline(x=vcen,color='r')
+		plt.xlim((vcen-100,vcen+100))
+		plt.xlabel("Velocity [km/s]")
+		plt.ylabel("T [K]")
+		plt.savefig(malt.base+'data/verification/'+source+"_"+line+"_velcheck"+direction+".png")
+		
 
 if __name__ == '__main__':
 	main()

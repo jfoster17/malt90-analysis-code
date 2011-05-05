@@ -55,20 +55,22 @@ def main():
 	for o,a in opts:
 		if o == "-f":
 			force_list = a.split(',')
-			print(force_list)
+			print("Forcing reduction of: "+str(force_list))
 		elif o == "-i":
 			ignore_list = a.split(',')
-			print(ignore_list)
+			print("Not doing: "+str(ignore_list))
 		elif o == "-n":
 			do_date = True
 			date = a
+			print("Reducing a night of data -- "+data)
 		elif o == "-s":
 			do_source = True
 			source = a
-			print(source)
+			print("Reducing a single source")
 		elif o == "-a":
 			#I think force does not work well with do_all
 			do_all = True
+			print("Reducing all undone sources")
 		else:
 			assert False, "unhandled option"
 	redlog = ReduceLog.ReduceLog()
@@ -78,10 +80,8 @@ def main():
 		sources = [source]
 	elif do_all:
 		sources = redlog.find_undone(malt.vnum)
-		#print(sources)
-		#print(nothing)
 	try:
-		print("Reducing the following source:"+sources)
+		print("Reducing the following source(s): "+str(sources))
 	except UnboundLocalError:
 		print("@@@ No sources to reduce @@@")
 		print(__doc__)
@@ -133,9 +133,9 @@ def do_reduction(source,force_list=[],ignore_list=[],quicklook=False,onlyone=Non
 def setup_lines(quicklook=False):
 	if quicklook:
 		### Lines to use for quick look ###
-		lines = ["hcop"]
-		freqs = [89188.526]
-		ifs   = [9]
+		lines = ["hnc","hcop"]
+		freqs = [90663.572,89188.526]
+		ifs   = [7,9]
 	else:
         	### Malt90 Main Survey ###
 		lines = ["n2hp","13cs","h41a","ch3cn",
@@ -278,17 +278,17 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 	Make moment map for GLon, GLat, combined in mommaps/line
 	Copy the combined moment map into sources/ folder
 	"""
-
+	print("Starting moment map creation...")
 	redlog = ReduceLog.ReduceLog()
 
 	for file_involved in filenames:
 	       	mommap_needed = False
 		direction = file_involved.partition('_')[2]
-		print(direction)
+		#print(direction)
 		if mommap_needed == False:
 			mommap_needed = redlog.check_val(file_involved,"mommaps",malt.vnum) 
 		if mommap_needed or force:
-			print("I am doing a moment map")
+			#print("I am doing a moment map")
 			if quicklook:
 				moment_map.do_source(source,lines,direction=direction,auto=True)
 			else:
