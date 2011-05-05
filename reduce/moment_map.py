@@ -39,7 +39,7 @@ def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
 	best_vel = {"hcop":0,"hnc":0}
 	for line in lines:
 		try:
-			infile = get_filename(source,line,direction=direction)
+			infile = get_filename(source,line,direction=direction+"_")
 			d,h = pyfits.getdata(infile,header=True)
 		except OSError:
 			print("Failed to open datacube "+infile)
@@ -74,6 +74,7 @@ def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
 def do_source(source,lines,direction=None,auto=False):
 	print("Sourcename: "+source)
 	central_velocity = get_velocity(source,auto,direction)
+	print("Center Velocity = "+str(central_velocity)+" km/s")
 	create_basic_directories(lines)
 	#create_output_directories(source,lines)
        	if direction:

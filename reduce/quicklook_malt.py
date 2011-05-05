@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-quicklook_malg.py is a quick reduction of hco+ (and/or hnc) to 
+quicklook_malt.py is a quick reduction of hco+ and hnc to 
 check that we actually see a source.
 
 Call with the name of your source and which direction you want
@@ -75,6 +75,7 @@ def make_verification_plots(source,direction=None):
 		mask = np.zeros(snr.shape)
 		mask[2:28,2:28] = 1
 		d,hmom = pyfits.getdata(malt.data_dir+'mommaps/'+line+'/'+source+direction+"_"+line+"_mommaps/"+source+direction+"_"+line+"_mom0.fits",header=True)
+		plt.clf()
 		plt.imshow(d*mask)
 		a = plt.colorbar()
 		a.set_label("K km/s")
