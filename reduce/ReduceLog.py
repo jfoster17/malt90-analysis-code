@@ -44,7 +44,7 @@ class ReduceLog:
 		elif field == "mommaps":
 			self.mommaps[i] = value
 		self.save()
-		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' /DATA/MALT_1/MALT90/reduction_log.txt > /DATA/MALT_1/MALT90/input_reduction_log.txt''')
+		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' '''+malt.log_location+'''  > '''+malt.base+'''input_reduction_log.txt''')
 		fcntl.flock(g,8) #Release lock file
 
 	def check_val(self,source_file,field,vcheck):
@@ -204,7 +204,7 @@ class ReduceLog:
 					self.mommaps.append("0")
 				print(os.path.basename(file)+'\t'+source)
 		self.save()			
-		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' '''+malt.log_location+'''  > '''+malt.base'''input_reduction_log.txt''')
+		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' '''+malt.log_location+'''  > '''+malt.base+'''input_reduction_log.txt''')
 		fcntl.flock(g,8) #Release lock file
 
 	def read(self):

@@ -14,9 +14,9 @@ import idl_stats
 import malt_params as malt
 
 def get_velocity(source,auto=True,direction=None):
-	"""Get a velocity for a source.
-	For now, use tabulated value.
-	Later, this function will find a velocity.
+	"""Get a velocity for a source
+	using either the HCO+ and HNC lines or
+	looking up from a table
 	"""
 	auto = False
 	if auto:
@@ -29,7 +29,6 @@ def get_velocity(source,auto=True,direction=None):
 				velocity = float(line.split()[1])
 
 		f.close()
-		#print(velocity)
 	return(velocity)
 
 def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
@@ -54,7 +53,7 @@ def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
 	for x in range(edge,nglat-edge):
 		for y in range(edge,nglon-edge):
 			spec = d[minchan:maxchan,x,y]
-			smoothspec = smooth(spec,window_len=sf,window='hamming')
+			smoothspec = idl_stats.smooth(spec,window_len=sf,window='hamming')
 			mean,sigma = idl_stats.iterstat(smoothspec)
 			goodsignal = np.where(smoothspec > threshold*sigma,1,0)
 			goodsignal = scipy.ndimage.binary_erosion(goodsignal,structure=np.ones(channel_trim))
@@ -71,10 +70,13 @@ def do_source(source,lines,direction=None,auto=False):
 	create_basic_directories(lines)
 	#create_output_directories(source,lines)
 	for line in lines:
-		infile = get_filename(source,line)
+		infile = get_filename(source,line,direction)
 		print(infile)
-		out_base = infile[:-9].replace("gridzilla","mommaps")
-		out_dir = source+"_"+line+"_mommaps"
+		if direction:
+			direction = direction+"_"
+		a = infile[:-9]
+		out_base = a.replace("gridzilla","mommaps")
+		out_dir = source+"_"+direction+line+"_mommaps"
 		try:
 			output_dir = os.path.join(malt.data_dir,"mommaps",line,out_dir)
 			os.mkdir(output_dir)
@@ -245,37 +247,6 @@ def save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,name_mod):
 	pyfits.writeto(out_base+'emap'+'.fits',maps['error']*
 					vwidth/1e3,hdout,clobber=True)
 
-def smooth(x,window_len=11,window='hanning'):
-	"""smooth the data using a window with requested size.
-
-	This method is based on the convolution of a scaled window with the signal.
-	The signal is prepared by introducing reflected copies of the signal 
-	(with the window size) in both ends so that transient parts are minimized
-	in the begining and end part of the output signal."""
-
-	if x.ndim != 1:
-		raise ValueError, "smooth only accepts 1 dimension arrays."
-
-	if x.size < window_len:
-		raise ValueError, "Input vector needs to be bigger than window size."
-	
-	if window_len<3:
-		return x
-
-	if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-		raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
-	
-	
-	s=np.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
-						#print(len(s))
-	if window == 'flat': #moving average
-		w=ones(window_len,'d')
-	else:
-		w=eval('np.'+window+'(window_len)')
-		
-	y=np.convolve(w/w.sum(),s,mode='same')
-	return y[window_len-1:-window_len+1]
-	
 
 
 def main():

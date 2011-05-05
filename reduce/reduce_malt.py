@@ -1,13 +1,34 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-reduce_malt.py
-
-A script to reduce Malt90 data.
-Executes glish scripts which control livedata/gridzila
+reduce_malt.py is the main script to reduce Malt90 data.
+It executes glish scripts which control custom versions of
+livedata/gridzila and places data in the following locations:
 Raw-Data->renamed/source
 Livedata->livedata/line
 Gridzilla->gridzilla/line
+
+Typically this script is not called directly, and is only
+called by quicklook_malt.py and do_night_maly.py. The command
+line options exist mainly to facilitate re-reduction of 
+sources which failed to reduce the first time.
+
+Options
+-n : Night  -- reduce all files taken on a give data (YYYY-MM-DD)
+-s : Source -- reduce a given source (GXXX.XXX-XX.XXX)
+-a : All    -- reduce all files reduced under old versions of the pipeline
+               this should, obviously, be used sparingly. In particular
+               version 1.4 and 1.5 are functionarly identical, since an
+	       external script was used to swap the SiO and HNC13C lines.
+-f : Force  -- force the reduction of specific steps even if marked as done
+               in the reduction log. Enter as a comma-separated list.
+	       Valid options: ldata,gzilla,mommaps
+-i : Ignore -- ignore the listed steps when reducing, even if the version
+               listed in the reduction log is out-of-date. Will crash
+	       if previous steps do not exists. Enter as comma-separated list
+	       Valid options: ldata,gzilla,mommaps
+
+--- Changelog ---
 Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in previous versions)
 """
 
@@ -23,7 +44,7 @@ def main():
 		opts,args=getopt.getopt(sys.argv[1:], "n:s:af:i:")
 	except getopt.GetoptError,err:
 		print str(err)
-		#usage()
+		print(__doc__)
 		sys.exit(2)
 	force_list  = []
 	ignore_list = []
@@ -59,11 +80,16 @@ def main():
 		sources = redlog.find_undone(malt.vnum)
 		#print(sources)
 		#print(nothing)
-	print(sources)
+	try:
+		print("Reducing the following source:"+sources)
+	except UnboundLocalError:
+		print("@@@ No sources to reduce @@@")
+		print(__doc__)
+		sys.exit(2)
 	for one_source in sources:
 		do_reduction(one_source,force_list,ignore_list)
 
-def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone=None):
+def do_reduction(source,force_list=[],ignore_list=[],quicklook=False,onlyone=None):
 	lines,freqs,ifs = setup_lines(quicklook)
 
 	### Do Livedata ###
@@ -96,13 +122,13 @@ def do_reduction(source,force_list=None,ignore_list=None,quicklook=False,onlyone
 	if onlyone:
 		filenames = [source+'_'+onlyone]
 	else:
-		filenames = [source+"_GLat",source+"_GLon"]
+		filenames = [source+"_GLat",source+"_GLon",source]
 	if 'mommaps' in force_list:
-		do_mommaps(source,filenames,lines,force=True,quicklook=quicklook,direction=onlyone)
+		do_mommaps(source,filenames,lines,force=True,quicklook=quicklook)
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,filenames,lines,force=False,quicklook=quicklook,direction=onlyone)
+		do_mommaps(source,filenames,lines,force=False,quicklook=quicklook)
 
 def setup_lines(quicklook=False):
 	if quicklook:
@@ -230,13 +256,6 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 			os.symlink(src,targ)
 		except OSError:
 			pass
-		#momsrc = data_dir+'moment_maps/'+line+'/'+source+'_'+line+'_MEAN_mom_maps'
-		#momtarg = data_dir+'sources/'+source+'/'+source+'_'+line+'_MEAN_mom_maps'
-		#try:
-		#	shutil.copytree(momsrc,momtarg)
-		#except OSError:
-		#	pass
-		
 		hdulist = pyfits.open(targ,mode='update')
 		prihdr = hdulist[0].header
 		prihdr.update('M90PIPEV',malt.vnum,'Malt90 Pipeline Version')
@@ -253,7 +272,7 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		except:
 			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
 	
-def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None):
+def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 	"""Make moment maps for source and place them correctly
 	Determine a source velocity (currently from table)
 	Make moment map for GLon, GLat, combined in mommaps/line
@@ -262,29 +281,28 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False,direction=None
 
 	redlog = ReduceLog.ReduceLog()
 
-	mommap_needed = False
 	for file_involved in filenames:
+	       	mommap_needed = False
+		direction = file_involved.partition('_')[2]
+		print(direction)
 		if mommap_needed == False:
 			mommap_needed = redlog.check_val(file_involved,"mommaps",malt.vnum) 
-	if mommap_needed or force:
-       		print("I am doing a moment map")
-		if quicklook:
-			moment_map.do_source(source,lines,direction=direction,auto=True)
-		else:
-			moment_map.do_source(source,lines,direction=direction)
-	for line in lines:
-		momsrc = malt.data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
-		momtarg = malt.data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
-		try:
-			shutil.copytree(momsrc,momtarg)
-		except OSError:
-			print("Failed to copy moment maps")
-			pass
-
-	for file_involved in filenames:
+		if mommap_needed or force:
+			print("I am doing a moment map")
+			if quicklook:
+				moment_map.do_source(source,lines,direction=direction,auto=True)
+			else:
+				moment_map.do_source(source,lines,direction=direction)
+		for line in lines:
+			momsrc = malt.data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
+			momtarg = malt.data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
+			try:
+				shutil.copytree(momsrc,momtarg)
+			except OSError:
+				print("Failed to copy moment maps")
+				pass
 		if not quicklook:
 			redlog.set_val(file_involved,"mommaps",malt.vnum)
-
 
 if __name__ == '__main__':
 	main()

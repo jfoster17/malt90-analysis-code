@@ -1,32 +1,39 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-quicklook_malt.py
-
-A quick reduction of hco+ (and/or hnc) to check that we actually
-see a source.
+quicklook_malg.py is a quick reduction of hco+ (and/or hnc) to 
+check that we actually see a source.
 
 Call with the name of your source and which direction you want
 to look at (leave off direction to combine both)
-quicklook_malt -s G320.020+00.100 -d GLat
+quicklook_malt.py -s G320.020+00.100 -d GLat
 
-That is, source name should follow -s and
-direction (GLat or GLon) should follow -d
+Options
+-s : Source The full name of the source you would like to reduce.
+-d: Direction The scan direction (GLat or GLon) to reduce. 
+    Leave blank to reduce both (reducing both maps takes longer).
 
+Verification images are created in /DATA/MALT_1/MALT90/data/verification/
 """
 
 import sys,os,getopt
 import pyfits
 import numpy as np
-import preprocess_malt,reduce_malt,ReduceLog
+
 import datetime
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+import malt_params as malt
+import idl_stats
+import preprocess_malt,reduce_malt,ReduceLog
 
 def main():
 	try:
 		opts,args = getopt.getopt(sys.argv[1:],"s:d:")
 	except getopt.GetoptError,err:
-		print str(err)
-		print __doc__
+		print(str(err))
+		print(__doc__)
 		sys.exit(2)
 	direction = None
 	for o,a in opts:
@@ -48,8 +55,58 @@ def main():
 		preprocess_malt.rename_files(files_to_process)
 		
 	#redlog = ReudceLog.ReduceLog()
+	reduce_malt.do_reduction(source,ignore_list = ['ldata','gzilla'],force_list=['mommaps'],quicklook=True,onlyone=direction)
+#	reduce_malt.do_reduction(source,force_list=['ldata','gzilla','mommaps'],quicklook=True,onlyone=direction)
+	make_verification_plots(source,direction)
 
-	reduce_malt.do_reduction(source,force_list=['ldata','gzilla','mommaps'],quicklook=True,onlyone=direction)
+def make_verification_plots(source,direction=None):
+	"""Make an image of the 0th moment map
+	and of the sepctrum at the peak position with
+	a line indicating the central velocity"""
+	if not direction:
+		direction = ""
+	else:
+		direction = "_"+direction
+
+	cube,h = pyfits.getdata(malt.data_dir+'gridzilla/hcop/'+source+direction+"_hcop_MEAN.fits",header=True)
+
+	snr = np.nan_to_num(pyfits.getdata(malt.data_dir+'mommaps/hcop/'+source+direction+"_hcop_mommaps/"+source+direction+"_hcop_snr0.fits"))
+	mask = np.zeros(snr.shape)
+	mask[2:28,2:28] = 1
+	d,hmom = pyfits.getdata(malt.data_dir+'mommaps/hcop/'+source+direction+"_hcop_mommaps/"+source+direction+"_hcop_mom0.fits",header=True)
+	plt.imshow(d*mask)
+	a = plt.colorbar()
+	a.set_label("K km/s")
+	plt.title(source+" "+direction+" HCO+ integrated intenxity")
+	plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
+	plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
+	plt.savefig(malt.data_dir+'verification/'+source+"_hcop_mom0"+direction+".png")
+	
+	nspec = h['NAXIS3']
+	vmin = hmom['VMIN']
+	vmax = hmom['VMAX']
+	vcen = np.average([vmin,vmax])
+	vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']+h['CRVAL3'])/1e3
+	
+	snr_smooth = idl_stats.blur_image(snr,3)
+	
+	peak_pix = np.argmax(snr_smooth*mask)
+	pid = np.unravel_index(peak_pix,snr.shape)
+
+	print(pid)
+	spectra = idl_stats.smooth(cube[...,pid[0],pid[1]])
+	print(spectra)
+	print(len(vel),len(spectra))
+
+	plt.clf()
+	plt.plot(vel,spectra)
+	plt.title(source+" "+direction+" HCO+ at maximum integrated intensity")
+	plt.axvline(x=vcen,color='r')
+	plt.xlim((vcen-100,vcen+100))
+	plt.xlabel("Velocity [km/s]")
+	plt.ylabel("T [K]")
+	plt.savefig(malt.base+'data/verification/'+source+"_hcop_velcheck"+direction+".png")
+
 
 if __name__ == '__main__':
 	main()
