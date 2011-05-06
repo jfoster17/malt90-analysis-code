@@ -67,6 +67,26 @@ for (read_file in files) {
   doif[ifno] := F
 }
 
+for (read_file in files) {
+  print 'Begin processing' 
+  if (read_file !~ m/\.rpf/) next
+  print 'Processing', read_file
+  doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F]
+  ifno := 7
+  print 'Working on IF', ifno
+  doif[ifno] := T
+  rootname := read_file ~ s/(\.rpf|\.rpf)//
+  write_file := spaste(lines[ifno],'/',rootname,'_',lines[ifno])
+  ldred.reader->setparm(IFsel=doif)
+  ldred.reader->setparm(startChan=startc)
+  ldred.reader->setparm(endChan=endc)
+    #directory := spaste('sdfits/',lines[ifno])
+    #ldred.writer->setparm(write_dir = )
+  ldred->start([read_file=read_file,write_file=write_file])
+  await ldred->finished
+  doif[ifno] := F
+}
+
 # Finished with livedata.
 print 'Closing down livedata...'
 ldred->terminate()

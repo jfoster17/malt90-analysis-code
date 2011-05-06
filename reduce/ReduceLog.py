@@ -129,7 +129,9 @@ class ReduceLog:
 		g = open(self.lock)
 		fcntl.flock(g,2)
 		self.read()
+		#print(filename)
 		i = self.fname.index(filename)
+		#print(i)
 		fcntl.flock(g,8)
 		return(self.id[i],self.source[i])		
 	
@@ -150,8 +152,11 @@ class ReduceLog:
 				p = subprocess.Popen(["rpfhdr",file],stdout=subprocess.PIPE).communicate()[0]
 				a = p.find("CALCODE")
 				possible_name = p[a+30:a+44]
-			       	try:
+				print("Possible Name:")
+				print(possible_name)
+				try:
 					source_name = possible_name.strip().rstrip('_R')[1:]
+					print(source_name)
 				except IndexError:
 					source_name = '--'
 				source = ''

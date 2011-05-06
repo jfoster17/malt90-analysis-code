@@ -37,9 +37,11 @@ def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
 	"""
 	lines = ["hcop","hnc"]
 	best_vel = {"hcop":0,"hnc":0}
+	if direction:
+		direction = direction+"_"
 	for line in lines:
 		try:
-			infile = get_filename(source,line,direction=direction+"_")
+     			infile = get_filename(source,line,direction=direction)
 			d,h = pyfits.getdata(infile,header=True)
 		except OSError:
 			print("Failed to open datacube "+infile)

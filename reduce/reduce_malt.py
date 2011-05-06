@@ -116,7 +116,7 @@ def do_reduction(source,force_list=[],ignore_list=[],quicklook=False,onlyone=Non
 		do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=quicklook)
 	### Do Reorganization ###
 	### I think it is fine to always do this step ###
-	create_source_folder(source,lines,quicklook)
+	create_source_folder(source,lines,quicklook=quicklook)
 
 	### Do moment maps ###
 	if onlyone:
@@ -256,11 +256,12 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 			os.symlink(src,targ)
 		except OSError:
 			pass
-		hdulist = pyfits.open(targ,mode='update')
-		prihdr = hdulist[0].header
-		prihdr.update('M90PIPEV',malt.vnum,'Malt90 Pipeline Version')
-		prihdr.update('BUNIT','K','Antenna Temperature')
-		hdulist.flush()
+		if not quicklook:
+			hdulist = pyfits.open(targ,mode='update')
+			prihdr = hdulist[0].header
+			prihdr.update('M90PIPEV',malt.vnum,'Malt90 Pipeline Version')
+			prihdr.update('BUNIT','K','Antenna Temperature')
+			hdulist.flush()
 		#except:
 			#print("Header update failed")
 	files_involved = [source+"_GLat",source+"_GLon"]
