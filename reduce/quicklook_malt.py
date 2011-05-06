@@ -43,8 +43,7 @@ def main():
 			direction = a
 
 	#Make sure that log is up-to-date.
-	#This step is quick, so just do +/-
-	#on current UT. 
+	#This step is quick, so just do +/- on current UT. 
 	now_utc = datetime.datetime.utcnow()
 	today = datetime.date(now_utc.year,now_utc.month,now_utc.day)
 	plus1 = today + datetime.timedelta(days=1)
@@ -55,7 +54,7 @@ def main():
 		preprocess_malt.rename_files(files_to_process)
 		
 	#redlog = ReudceLog.ReduceLog()
-	reduce_malt.do_reduction(source,ignore_list = ['ldata','gzilla'],force_list=['mommaps'],quicklook=True,onlyone=direction)
+	reduce_malt.do_reduction(source,force_list=['ldata','gzilla','mommaps'],quicklook=True,onlyone=direction)
 #	reduce_malt.do_reduction(source,force_list=['ldata','gzilla','mommaps'],quicklook=True,onlyone=direction)
 	make_verification_plots(source,direction)
 

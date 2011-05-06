@@ -3,7 +3,7 @@
 """
 do_night_malt.py fully processes a night of data.
 Should be run at the end of a night
-after rsyncing data across (if required).
+
 """
 import sys
 import preprocess_malt, reduce_malt, ReduceLog

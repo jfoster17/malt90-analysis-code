@@ -91,17 +91,26 @@ class ReduceLog:
 		fcntl.flock(g,2) #Lock the lock file during access
 		self.read()
 		new_files = []
-#		print(self.rename)
 		for i,entry in enumerate(self.rename):
-		#	print(entry)
-			
 			if (entry < vcheck or self.smooth[i] < vcheck) and float(self.id[i]) > 0: #The ID check removes cal sources
-				#print(self.id[i])
-				#print(self.fname[i])
 				if datestring in self.fname[i]:
 					new_files.append(self.fname[i])
 		fcntl.flock(g,8) #Release lock file
 		return(new_files)
+	
+	def find_latest_calibration_on_date(self,datestring="20"):
+		g = open(self.lock)
+		fcntl.flock(g,2)
+		self.read()
+		latest_cal = None
+		for i,filename in enumerate(self.fname):
+			#This should step through in order
+			if ("cal" in self.source[i]):
+				latest_cal = filename
+				latest_src = self.source[i].rstrip("_")
+		fcntl.flock(g,8)
+		return(latest_cal,latest_src)
+	
 
 	def find_files_with_date(self,date):
 		g = open(self.lock)
