@@ -18,7 +18,7 @@ def get_velocity(source,auto=True,direction=None):
 	using either the HCO+ and HNC lines or
 	looking up from a table
 	"""
-
+	auto = True
 	if auto:
 		velocity = identify_velocity(source,direction=direction)
 	else:
