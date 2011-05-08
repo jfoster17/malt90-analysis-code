@@ -14,7 +14,7 @@ line options exist mainly to facilitate re-reduction of
 sources which failed to reduce the first time.
 
 Options
--n : Night  -- reduce all files taken on a give data (YYYY-MM-DD)
+-n : Night  -- reduce all files taken on a give date (YYYY-MM-DD)
 -s : Source -- reduce a given source (GXXX.XXX-XX.XXX)
 -a : All    -- reduce all files reduced under old versions of the pipeline
                this should, obviously, be used sparingly. In particular

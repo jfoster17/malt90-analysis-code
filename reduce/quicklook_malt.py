@@ -78,7 +78,7 @@ def make_verification_plots(source,direction=None):
 		plt.imshow(d*mask)
 		a = plt.colorbar()
 		a.set_label("K km/s")
-		plt.title(source+" "+direction+" "+line+" integrated intenxity")
+		plt.title(source+" "+direction+" "+line+" integrated intensity")
 		plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
 		plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
 		plt.savefig(malt.data_dir+'verification/'+source+"_"+line+"_mom0"+direction+".png")
