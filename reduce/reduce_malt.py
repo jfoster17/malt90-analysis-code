@@ -27,13 +27,18 @@ Options
                listed in the reduction log is out-of-date. Will crash
 	       if previous steps do not exists. Enter as comma-separated list
 	       Valid options: ldata,gzilla,mommaps
+-h : Help   -- display this help
 
 --- Changelog ---
-Version 1.5 correctly identifies SiO and HN13C lines data (they were swapped in previous versions)
+Version 1.5 correctly identifies SiO and HN13C lines data 
+(they were swapped in previous versions)
 """
 
 import sys,os,shutil,getopt
 from subprocess import *
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 import pyfits
 import ReduceLog
 import moment_map
@@ -41,7 +46,7 @@ import malt_params as malt
 
 def main():
 	try:
-		opts,args=getopt.getopt(sys.argv[1:], "n:s:af:i:")
+		opts,args=getopt.getopt(sys.argv[1:], "n:s:af:i:h")
 	except getopt.GetoptError,err:
 		print str(err)
 		print(__doc__)
@@ -71,8 +76,14 @@ def main():
 			#I think force does not work well with do_all
 			do_all = True
 			print("Reducing all undone sources")
+		elif o = "-h":
+			print(__doc_)
+			sys.exit(1)
 		else:
 			assert False, "unhandled option"
+			print(__doc__)
+			sys.exit(2)
+
 	redlog = ReduceLog.ReduceLog()
 	if do_date:
 		sources = redlog.find_files_with_date(date)
@@ -89,7 +100,10 @@ def main():
 	for one_source in sources:
 		do_reduction(one_source,force_list,ignore_list)
 
-def do_reduction(source,force_list=[],ignore_list=[],quicklook=False,onlyone=None):
+def do_reduction(source,force_list=[],ignore_list=[],
+		 quicklook=False,onlyone=None):
+	"""Main script calling Livedate,Gridzilla,Organize,MomentMaps"""
+
 	lines,freqs,ifs = setup_lines(quicklook)
 
 	### Do Livedata ###
@@ -109,13 +123,15 @@ def do_reduction(source,force_list=[],ignore_list=[],quicklook=False,onlyone=Non
 	else:
 		filenames = [source+'_GLat.sdfits',source+'_GLon.sdfits']
 	if 'gzilla' in force_list:
-		do_gridzilla(source,filenames,lines,freqs,ifs,force=True,quicklook=quicklook)
+		do_gridzilla(source,filenames,lines,freqs,ifs,force=True,
+			     quicklook=quicklook)
 	elif 'gzilla' in ignore_list:
 		pass
 	else:
-		do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=quicklook)
+		do_gridzilla(source,filenames,lines,freqs,ifs,force=False,
+			     quicklook=quicklook)
 	### Do Reorganization ###
-	### I think it is fine to always do this step ###
+	### Always do this step ###
 	create_source_folder(source,lines,quicklook=quicklook)
 
 	### Do moment maps ###
@@ -124,11 +140,16 @@ def do_reduction(source,force_list=[],ignore_list=[],quicklook=False,onlyone=Non
 	else:
 		filenames = [source+"_GLat",source+"_GLon",source]
 	if 'mommaps' in force_list:
-		do_mommaps(source,filenames,lines,force=True,quicklook=quicklook)
+		do_mommaps(source,filenames,lines,force=True,
+			   quicklook=quicklook)
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,filenames,lines,force=False,quicklook=quicklook)
+		do_mommaps(source,filenames,lines,force=False,
+			   quicklook=quicklook)
+	### Make Verification Images ###
+	### Always do this step too  ###
+	make_verification_plots(source)
 
 def setup_lines(quicklook=False):
 	if quicklook:
@@ -147,7 +168,7 @@ def setup_lines(quicklook=False):
 			 89188.526, 88631.847, 88239.027, 87925.238, 
 			 87316.925, 87090.850, 86847.010, 86754.330]	
 		ifs   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
-	### Malt90 backward sources (first day) st###
+	### Malt90 backward sources (first day) ###
 #	lines = ["ch3cn","h41a","13cs","n2hp",
 #		 "hc13ccn","hnc","13c34s","hc3n",
 #		 "hnco404","hnco413","hcn","hcop",
@@ -172,68 +193,97 @@ def make_dirs(dirname,lines):
 			pass
 
 def do_livedata(filenames,lines,force=False,quicklook=False):
+	"""Do Livedata if we need to"""
 	make_dirs("livedata",lines)
 	redlog = ReduceLog.ReduceLog()
 	for filename in filenames:
 		print(filename)
 		if os.path.exists(malt.data_dir+'renamed/'+filename):
-			#print(filename)
 			ftemp = filename
-			ldata_needed = redlog.check_val(ftemp.replace('.rpf',''),"ldata",malt.vnum)
-			#print("Ldata")
-			#print(ldata_done)
+			ldata_needed = redlog.check_val(ftemp.replace(
+					'.rpf',''),"ldata",malt.vnum)
 			if ldata_needed or force:
-				#I think I could use check_call here to see if this dies
+				#Could use check_call here to see if this dies
 				if not quicklook:
-					p = Popen(["glish",'-l',malt.sd+'ldata_malt90.g','-plain',filename])
+					p = Popen(["glish",'-l',
+						   malt.sd+'ldata_malt90.g',
+						   '-plain',filename])
 					p.wait()
 				else:
-					p = Popen(["glish",'-l',malt.sd+'ldata_malt90_ql.g','-plain',filename])
+					p = Popen(["glish",'-l',
+						   malt.sd+'ldata_malt90_ql.g',
+						   '-plain',filename])
 					p.wait()
 				if not quicklook:
-					redlog.set_val(ftemp.replace('.rpf',''),"ldata",malt.vnum)
+					redlog.set_val(ftemp.replace('.rpf',
+						       ''),"ldata",malt.vnum)
 		
 
 def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
-	# print(over_gzilla_both)
+	"""Do Gridzilla on GLat, GLon, and Both"""
 	make_dirs("gridzilla",lines)
 	redlog = ReduceLog.ReduceLog()
 	if len(filenames) == 2:
 		fn1 = filenames[0]
 		fn2 = filenames[1]
-		gzilla_do1 = redlog.check_val(fn1.replace(".sdfits",""),"gzilla",malt.vnum) 
-		gzilla_do2 = redlog.check_val(fn2.replace(".sdfits",""),"gzilla",malt.vnum) 
+		gzilla_do1 = redlog.check_val(fn1.replace(".sdfits",""),
+					      "gzilla",malt.vnum) 
+		gzilla_do2 = redlog.check_val(fn2.replace(".sdfits",""),
+					      "gzilla",malt.vnum) 
 	for fn in filenames:
 		fail_flag = False
-		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),"gzilla",malt.vnum) 
+		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),
+						 "gzilla",malt.vnum) 
 		for i,line,freq in zip(ifs,lines,freqs):
 			filein  = fn.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = fn.replace(".sdfits","")+'_'+line
-			#print(filein)
 			if gzilla_needed or force:
-				q = Popen(["glish",'-l',malt.sd+'gzill_malt90.g',\
-					line,str(freq),str(i-1),fileout,filein])
+				q = Popen(["glish",'-l',
+					   malt.sd+'gzill_malt90.g',line,
+					   str(freq),str(i-1),fileout,filein])
 				q.wait() 
 				try:
-					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
-					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(malt.data_dir
+						    +'/gridzilla/'+line+'/'
+						    +fileout+'.beamRSS.fits',
+						    malt.data_dir+'/gridzilla/'
+						    +line+'/'+'flotsam')
+					shutil.move(malt.data_dir
+						    +'/gridzilla/'+line+'/'
+						    +fileout
+						    +'.spectracounts.fits',
+						    malt.data_dir
+						    +'/gridzilla/'+line+'/'
+						    +'flotsam')
 				except IOError:
 					fail_flag = True
 					print("Failed to move flotsam files")
 		if (not fail_flag) and (not quicklook):
-			redlog.set_val(fn.replace(".sdfits",""),"gzilla",malt.vnum)
+			redlog.set_val(fn.replace(".sdfits",""),
+				       "gzilla",malt.vnum)
 	if len(filenames) == 2:
 		for i,line,freq in zip(ifs,lines,freqs):
 			file1   = fn1.replace(".sdfits","")+'_'+line+'.sdfits'
 			file2   = fn2.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = source+'_'+line
 			if gzilla_do1 or gzilla_do2 or force:
-				q = Popen(["glish",'-l',malt.sd+'gzill_malt90.g',\
-					line,str(freq),str(i-1),fileout,file1,file2])
+				q = Popen(["glish",'-l',malt.sd
+					   +'gzill_malt90.g',line,str(freq),
+					   str(i-1),fileout,file1,file2])
 				q.wait()
 				try:
-					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.beamRSS.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
-					shutil.move(malt.data_dir+'/gridzilla/'+line+'/'+fileout+'.spectracounts.fits',malt.data_dir+'/gridzilla/'+line+'/'+'flotsam')
+					shutil.move(malt.data_dir
+						    +'/gridzilla/'+line+'/'
+						    +fileout+'.beamRSS.fits',
+						    malt.data_dir+'/gridzilla/'
+						    +line+'/'+'flotsam')
+					shutil.move(malt.data_dir
+						    +'/gridzilla/'+line+'/'
+						    +fileout
+						    +'.spectracounts.fits',
+						    malt.data_dir
+						    +'/gridzilla/'+line+'/'
+						    +'flotsam')
 				except IOError:
 					print("Failed to move flotsam files")
 					#This does not return a useful error
@@ -259,7 +309,8 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		if not quicklook:
 			hdulist = pyfits.open(targ,mode='update')
 			prihdr = hdulist[0].header
-			prihdr.update('M90PIPEV',malt.vnum,'Malt90 Pipeline Version')
+			prihdr.update('M90PIPEV',malt.vnum,
+				      'Malt90 Pipeline Version')
 			prihdr.update('BUNIT','K','Antenna Temperature')
 			hdulist.flush()
 		#except:
@@ -269,9 +320,11 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		#print(file_involved)
 		try:
 			if not quicklook:
-				redlog.set_val(file_involved,"arrange",malt.vnum)
+				redlog.set_val(file_involved,"arrange",
+					       malt.vnum)
 		except:
-			print("Failed to update log for "+file_involved+". Maybe it does not exist?")
+			print("Failed to update log for "+file_involved
+			      +". Maybe it does not exist?")
 	
 def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 	"""Make moment maps for source and place them correctly
@@ -285,18 +338,21 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 	for file_involved in filenames:
 	       	mommap_needed = False
 		direction = file_involved.partition('_')[2]
-		#print(direction)
 		if mommap_needed == False:
-			mommap_needed = redlog.check_val(file_involved,"mommaps",malt.vnum) 
+			mommap_needed = redlog.check_val(file_involved,
+							 "mommaps",malt.vnum) 
 		if mommap_needed or force:
-			#print("I am doing a moment map")
 			if quicklook:
-				moment_map.do_source(source,lines,direction=direction,auto=True)
+				moment_map.do_source(source,lines,
+						     direction=direction,
+						     auto=True)
 			else:
-				moment_map.do_source(source,lines,direction=direction)
+				moment_map.do_source(source,lines,
+						     direction=direction)
 		for line in lines:
-			momsrc = malt.data_dir+'mommaps/'+line+'/'+source+'_'+line+'_mommaps'
-			momtarg = malt.data_dir+'sources/'+source+'/'+source+'_'+line+'_mommaps'
+			endpart = source+'_'+line+'_mommaps'
+			momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
+			momtarg = malt.data_dir+'sources/'+source+'/'+endpart
 			try:
 				shutil.copytree(momsrc,momtarg)
 			except OSError:
@@ -304,6 +360,68 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 				pass
 		if not quicklook:
 			redlog.set_val(file_involved,"mommaps",malt.vnum)
+
+def make_verification_plots(source,direction=None):
+	"""Make an image of the 0th moment map
+	and of the sepctrum at the peak position with
+	a line indicating the central velocity"""
+	lines = ["hcop","hnc"]
+
+	if not direction:
+		direction = ""
+	else:
+		direction = "_"+direction
+	for line in lines:
+		cube,h = pyfits.getdata(malt.data_dir+'gridzilla/'
+					+line+'/'+source+direction+"_"
+					+line+"_MEAN.fits",header=True)
+		snr = np.nan_to_num(pyfits.getdata(malt.data_dir+'mommaps/'
+						   +line+'/'+source+direction
+						   +"_"+line+"_mommaps/"
+						   +source+direction+"_"
+						   +line+"_snr0.fits"))
+		mask = np.zeros(snr.shape)
+		mask[2:28,2:28] = 1
+		d,hmom = pyfits.getdata(malt.data_dir+'mommaps/'+line
+					+'/'+source+direction+"_"+line
+					+"_mommaps/"+source+direction+"_"
+					+line+"_mom0.fits",header=True)
+		plt.clf()
+		plt.imshow(d*mask)
+		a = plt.colorbar()
+		a.set_label("K km/s")
+		plt.title(source+" "+direction+" "+line
+			  +" integrated intensity")
+		plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
+		plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
+		plt.savefig(malt.data_dir+'verification/'+source+"_"
+			    +line+"_mom0"+direction+".png")
+	
+		nspec = h['NAXIS3']
+		vmin = hmom['VMIN']
+		vmax = hmom['VMAX']
+		vcen = np.average([vmin,vmax])
+		vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']
+		       +h['CRVAL3'])/1e3
+	
+		snr_smooth = idl_stats.blur_image(snr,3)
+	
+		peak_pix = np.argmax(snr_smooth*mask)
+		pid = np.unravel_index(peak_pix,snr.shape)
+
+		spectra = idl_stats.smooth(cube[...,pid[0],pid[1]])
+	
+		plt.clf()
+		plt.plot(vel,spectra)
+		plt.title(source+" "+direction+" "+line
+			  +" at maximum integrated intensity")
+		plt.axvline(x=vcen,color='r')
+		plt.xlim((vcen-100,vcen+100))
+		plt.xlabel("Velocity [km/s]")
+		plt.ylabel("T [K]")
+		plt.savefig(malt.base+'data/verification/'+source+"_"
+			    +line+"_velcheck"+direction+".png")
+
 
 if __name__ == '__main__':
 	main()
