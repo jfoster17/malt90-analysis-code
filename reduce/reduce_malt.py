@@ -40,8 +40,10 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import pyfits
+import numpy as np
 import ReduceLog
 import moment_map
+import idl_stats
 import malt_params as malt
 
 def main():
@@ -76,7 +78,7 @@ def main():
 			#I think force does not work well with do_all
 			do_all = True
 			print("Reducing all undone sources")
-		elif o = "-h":
+		elif o == "-h":
 			print(__doc_)
 			sys.exit(1)
 		else:

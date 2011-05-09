@@ -11,6 +11,14 @@ Options
 -n : Night -- reduce all files on a give date (YYYY-MM-DD)
 -t : Today -- only reduce files from UT today or night as
               specified above.
+-f : Force  -- force the reduction of specific steps even if marked as done
+               in the reduction log. Enter as a comma-separated list.
+	       Valid options: ldata,gzilla,mommaps
+-i : Ignore -- ignore the listed steps when reducing, even if the version
+               listed in the reduction log is out-of-date. Will crash
+	       if previous steps do not exists. Enter as comma-separated list
+	       Valid options: ldata,gzilla,mommaps
+-h : Help   -- display this help
 
 
 """
@@ -21,7 +29,7 @@ import getopt
 
 def main():
 	try:
-		opts,args = getopt.getopt(sys.argv[1:], "n:t")
+		opts,args = getopt.getopt(sys.argv[1:], "n:tf:i:h")
 	except getopt.GetoptError,err:
 		print(str(err))
 		print(__doc__)
@@ -31,12 +39,22 @@ def main():
 	now_utc = datetime.datetime.utcnow()
         night   = datetime.date(now_utc.year,now_utc.
 			       month,now_utc.day).isoformat()
-
+	force_list = []
+	ignore_list = []
 	for o,a in opts:
 		if o == "-n":
 			night = a
-		if o == "t":
+		elif o == "t":
 			do_yesterday = False
+		elif o == "-f":
+			force_list = a.split(',')
+			print("Forcing reduction of: "+str(force_list))
+		elif o == "-i":
+			ignore_list = a.split(',')
+			print("Not doing: "+str(ignore_list))
+		elif o == "-h":
+			print(__doc__)
+			sys.exit(1)
 
 	
 	dlist = night.split('-')
@@ -53,15 +71,16 @@ def main():
 
 	for date in daylist:
 		
-		files_to_process = preprocess_malt.get_new_files(date.isoformat(),
-							in_middle_of_obs = False)
+		files_to_process = preprocess_malt.get_new_files(
+			           date.isoformat(),in_middle_of_obs = False)
 		preprocess_malt.rename_files(files_to_process)
 
 		redlog = ReduceLog.ReduceLog()
 		sources = redlog.find_files_with_date(date.isoformat())
-#		print(sources)
 		for one_source in sources:
-			reduce_malt.do_reduction(one_source)
+			reduce_malt.do_reduction(one_source,
+						 force_list = force_list,
+						 ignore_list = ignore_list)
 
 if __name__ == '__main__':
 	main()
