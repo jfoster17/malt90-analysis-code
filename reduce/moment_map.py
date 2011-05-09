@@ -13,25 +13,27 @@ import pylab
 import idl_stats
 import malt_params as malt
 
-def get_velocity(source,auto=True,direction=None):
+def get_velocity(source,auto=False,direction=None):
 	"""Get a velocity for a source
 	using either the HCO+ and HNC lines or
-	looking up from a table
+	looking up from a table. Try table first
+	unless specifically instructed otherwise.
 	"""
-	auto = True
-	if auto:
-		velocity = identify_velocity(source,direction=direction)
-	else:
-		path_to_vel = os.path.join(malt.sd,'malt90_velocities_year1.txt')
+	velocity = 999
+	if not auto:
+		path_to_vel = os.path.join(malt.sd,
+					   'malt90_velocities_year1.txt')
 		f = open(path_to_vel,'r')
 		for line in f:
 			if line.split()[0].strip() == source:
 				velocity = float(line.split()[1])
 
 		f.close()
+	if velocity == 999 or auto:
+		velocity = identify_velocity(source,direction=direction)
 	return(velocity)
 
-def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
+def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
 	"""Identify a source velocity based on HCO+
 	Later I want to add HNC
 	"""
@@ -58,10 +60,14 @@ def identify_velocity(source,minchan = 200,maxchan = 3896,sig=5,direction=None):
 		for x in range(edge,nglat-edge):
 			for y in range(edge,nglon-edge):
 				spec = d[minchan:maxchan,x,y]
-				smoothspec = idl_stats.smooth(spec,window_len=sf,window='hamming')
+				smoothspec = idl_stats.smooth(spec,
+					     window_len=sf,window='hamming')
 				mean,sigma = idl_stats.iterstat(smoothspec)
-				goodsignal = np.where(smoothspec > threshold*sigma,1,0)
-				goodsignal = scipy.ndimage.binary_erosion(goodsignal,structure=np.ones(channel_trim))
+				goodsignal = np.where(smoothspec > 
+						      threshold*sigma,1,0)
+				goodsignal = scipy.ndimage.binary_erosion(
+					     goodsignal,structure=np.ones(
+					     channel_trim))
 				maskedsignal = goodsignal*smoothspec
 				max_chan[x,y] = np.argmax(maskedsignal)
 		max_chan = np.extract(max_chan > 0,max_chan)
@@ -88,11 +94,13 @@ def do_source(source,lines,direction=None,auto=False):
 		out_base = a.replace("gridzilla","mommaps")
 		out_dir = source+"_"+direction+line+"_mommaps"
 		try:
-			output_dir = os.path.join(malt.data_dir,"mommaps",line,out_dir)
+			output_dir = os.path.join(malt.data_dir,
+						 "mommaps",line,out_dir)
 			os.mkdir(output_dir)
 		except OSError:
 			pass
-		make_moment_maps(infile,out_base,output_dir,central_velocity=central_velocity*1000)
+		make_moment_maps(infile,out_base,output_dir,
+				 central_velocity=central_velocity*1000)
 
 def create_basic_directories(lines):
 	"""Create subdirectories under mommaps"""
@@ -113,7 +121,8 @@ def get_filename(source,line,direction=None):
 	full_path = os.path.join(malt.data_dir,"gridzilla",line,filename)
 	return(full_path)
 
-def calculate_moments(d,minchan=False,maxchan=False,vel=False,bestmask=False,mask=False):
+def calculate_moments(d,minchan=False,maxchan=False,
+		      vel=False,bestmask=False,mask=False):
 	"""This function actually calculates moments"""
 	nglat = d.shape[1]
 	nglon = d.shape[2]
@@ -141,8 +150,10 @@ def calculate_moments(d,minchan=False,maxchan=False,vel=False,bestmask=False,mas
 			ind = ind[velmask > 0]
 			sigma = maps['error'][x,y]
 			if ind.size > 2 and (sigma > 0):
-				mom = idl_stats.wt_moment(vel[ind],fullspec[ind],
-						errors = np.zeros(ind.size)+sigma)
+				mom = idl_stats.wt_moment(vel[ind],
+						fullspec[ind],
+						errors = np.zeros(ind.size)
+							 +sigma)
 				maps['mean'][x,y]  = mom['mean']
 				maps['sd'][x,y]    = mom['stdev']
 				maps['errmn'][x,y] = mom['errmn']
@@ -156,7 +167,8 @@ def calculate_moments(d,minchan=False,maxchan=False,vel=False,bestmask=False,mas
 				maps['npix'][x,y]  = np.nan
 	return(maps)
 
-def make_moment_maps(infile,out_base,output_dir,central_velocity=False,second=False):
+def make_moment_maps(infile,out_base,output_dir,central_velocity=False,
+		     second=False):
 	"""Wrapper function to deal with headers
 	Call function to make maps
 	Save maps
@@ -186,12 +198,10 @@ def make_moment_maps(infile,out_base,output_dir,central_velocity=False,second=Fa
 	#maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad = 125)
 	#save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,"fullvel")
 	
-	maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad = 75)
-#	print("Maps Made")
-	#print(out_base)
-	#print(output_dir)
-#	print(hdout)
-	save_maps(maps,hdout,out_base,output_dir,vel,minchan,maxchan,vwidth,"medvel")
+	maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,
+					 nchan,d,n_pad = 75)
+	save_maps(maps,hdout,out_base,output_dir,vel,minchan,maxchan,vwidth,
+		  "medvel")
 
 	#maps = do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad = 25)
 	#save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,"smallvel")
@@ -206,13 +216,14 @@ def do_predetermined_velocity(central_velocity,vel,hdout,n_edge,nchan,d,n_pad):
 
 	vmin = vel[minchan]/1e3
 	vmax = vel[maxchan]/1e3
-	print("Velocity Integration Limit: "+str(vmin)+' to '+str(vmax)+ 'km/s')
+	print("Velocity Integration: "+str(vmin)+' to '+str(vmax)+ 'km/s')
 	hdout.update('VMIN',vmin,'KM/S')
 	hdout.update('VMAX',vmax,'KM/S')
 	mask = np.zeros(d.shape,dtype=np.int)
 	mask[minchan:maxchan,...] = 1
 	bestmask = mask[...,0,0]
-	maps = calculate_moments(d,minchan,maxchan,vel,bestmask=bestmask,mask=mask)
+	maps = calculate_moments(d,minchan,maxchan,vel,
+				 bestmask=bestmask,mask=mask)
 	return(maps)
 
 def save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,name_mod):
@@ -225,7 +236,8 @@ def save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,name_mod):
 #	print(out_temp)
 	out_base = out_base2
 	print("Saving maps to: "+out_base)
-	badind = np.where((maps['errmn'] > 1e6) | (maps['errsd'] > 1e6)) #This trims out sources with sigma_v > 1000 km/s
+	#This trims out sources with sigma_v > 1000 km/s
+	badind = np.where((maps['errmn'] > 1e6) | (maps['errsd'] > 1e6)) 
 	try:
 		maps['mean'][badind] = np.nan
 		maps['sd'][badind]   = np.nan
@@ -240,23 +252,24 @@ def save_maps(maps,hdout,out_base,out_dir,vel,minchan,maxchan,vwidth,name_mod):
 	hdout.update('CRVAL2',hdout['CRVAL2'],'DEGREES')
 	hdout.update('BUNIT','KM/S')
 	
+	ob = out_base
 	maps['intint'] = maps['intint']*vwidth/1e3
-	pyfits.writeto(out_base+'mom1'+'.fits',maps['mean']/1e3,hdout,clobber=True)
-	pyfits.writeto(out_base+'mom2'+'.fits',maps['sd']/1e3,hdout,clobber=True)
-	pyfits.writeto(out_base+'err1'+'.fits',maps['errmn']/1e3,hdout,clobber=True)
-	pyfits.writeto(out_base+'err2'+'.fits',maps['errsd']/1e3,hdout,clobber=True)
+	pyfits.writeto(ob+'mom1'+'.fits',maps['mean']/1e3,hdout,clobber=True)
+	pyfits.writeto(ob+'mom2'+'.fits',maps['sd']/1e3,hdout,clobber=True)
+	pyfits.writeto(ob+'err1'+'.fits',maps['errmn']/1e3,hdout,clobber=True)
+	pyfits.writeto(ob+'err2'+'.fits',maps['errsd']/1e3,hdout,clobber=True)
 	hdout.update('BUNIT','NONE')
 
-	pyfits.writeto(out_base+'npix'+'.fits',maps['npix'],clobber=True)
-	pyfits.writeto(out_base+'snr0'+'.fits',maps['intint']/(maps['error']*
+	pyfits.writeto(ob+'npix'+'.fits',maps['npix'],clobber=True)
+	pyfits.writeto(ob+'snr0'+'.fits',maps['intint']/(maps['error']*
 		np.sqrt(maps['npix'])*vwidth/1e3),hdout,clobber=True)
 	
 	hdout.update('BUNIT','K.KM/S')
 	
-	pyfits.writeto(out_base+'mom0'+'.fits',maps['intint'],hdout,clobber=True)
-	pyfits.writeto(out_base+'err0'+'.fits',maps['error']*np.sqrt(maps['npix'])*
+	pyfits.writeto(ob+'mom0'+'.fits',maps['intint'],hdout,clobber=True)
+	pyfits.writeto(ob+'err0'+'.fits',maps['error']*np.sqrt(maps['npix'])*
 					vwidth/1e3,hdout,clobber=True)
-	pyfits.writeto(out_base+'emap'+'.fits',maps['error']*
+	pyfits.writeto(ob+'emap'+'.fits',maps['error']*
 					vwidth/1e3,hdout,clobber=True)
 
 
