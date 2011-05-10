@@ -307,8 +307,12 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 			pass
 		filename = source+'_'+line+'_MEAN.fits'
 		#src  = malt.data_dir+'gridzilla/'+line+'/'+filename
-		src  = '../gridzilla/'+line+'/'+filename
+		src  = '../../gridzilla/'+line+'/'+filename
 		targ = malt.data_dir+'sources/'+source+'/'+filename
+		try:
+			os.unlink(targ)
+		except OSError:
+			pass
 		try:
 			os.symlink(src,targ)
 		except OSError:
@@ -366,9 +370,12 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 			momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
 			momtarg = malt.data_dir+'sources/'+source+'/'+endpart
 			try:
+				shutil.rmtree(momtarg)
 				shutil.copytree(momsrc,momtarg)
 			except OSError:
 				print("Failed to copy moment maps")
+				print("From "+momsrc)
+				print("To "+momtarg)
 				pass
 		if not quicklook:
 			redlog.set_val(file_involved,"mommaps",
