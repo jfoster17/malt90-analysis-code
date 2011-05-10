@@ -30,8 +30,11 @@ Options
 -h : Help   -- display this help
 
 --- Changelog ---
+Version 1.6 uses minimal gaussian smoothing in Gridzilla.
 Version 1.5 correctly identifies SiO and HN13C lines data 
 (they were swapped in previous versions)
+Version 1.4 removes the ASAP smoothing (which distorted the 
+velocity axis) and uses Livedata to smooth
 """
 
 import sys,os,shutil,getopt
@@ -203,7 +206,7 @@ def do_livedata(filenames,lines,force=False,quicklook=False):
 		if os.path.exists(malt.data_dir+'renamed/'+filename):
 			ftemp = filename
 			ldata_needed = redlog.check_val(ftemp.replace(
-					'.rpf',''),"ldata",malt.vnum)
+					'.rpf',''),"ldata",malt.vnum["ldata"])
 			if ldata_needed or force:
 				#Could use check_call here to see if this dies
 				if not quicklook:
@@ -218,7 +221,8 @@ def do_livedata(filenames,lines,force=False,quicklook=False):
 					p.wait()
 				if not quicklook:
 					redlog.set_val(ftemp.replace('.rpf',
-						       ''),"ldata",malt.vnum)
+						       ''),"ldata",
+						       malt.vnum["ldata"])
 		
 
 def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
@@ -229,13 +233,13 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 		fn1 = filenames[0]
 		fn2 = filenames[1]
 		gzilla_do1 = redlog.check_val(fn1.replace(".sdfits",""),
-					      "gzilla",malt.vnum) 
+					      "gzilla",malt.vnum["gzilla"]) 
 		gzilla_do2 = redlog.check_val(fn2.replace(".sdfits",""),
-					      "gzilla",malt.vnum) 
+					      "gzilla",malt.vnum["gzilla"]) 
 	for fn in filenames:
 		fail_flag = False
 		gzilla_needed = redlog.check_val(fn.replace(".sdfits",""),
-						 "gzilla",malt.vnum) 
+						 "gzilla",malt.vnum["gzilla"]) 
 		for i,line,freq in zip(ifs,lines,freqs):
 			filein  = fn.replace(".sdfits","")+'_'+line+'.sdfits'
 			fileout = fn.replace(".sdfits","")+'_'+line
@@ -262,7 +266,7 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 					print("Failed to move flotsam files")
 		if (not fail_flag) and (not quicklook):
 			redlog.set_val(fn.replace(".sdfits",""),
-				       "gzilla",malt.vnum)
+				       "gzilla",malt.vnum["gzilla"])
 	if len(filenames) == 2:
 		for i,line,freq in zip(ifs,lines,freqs):
 			file1   = fn1.replace(".sdfits","")+'_'+line+'.sdfits'
@@ -311,9 +315,13 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		if not quicklook:
 			hdulist = pyfits.open(targ,mode='update')
 			prihdr = hdulist[0].header
-			prihdr.update('M90PIPEV',malt.vnum,
+			prihdr.update('M90PIPEV',malt.vnum["gzilla"],
 				      'Malt90 Pipeline Version')
 			prihdr.update('BUNIT','K','Antenna Temperature')
+			prihdr.update('BMAJ',0.0105,
+				      'Beam major FWHM (degrees)')
+			prihdr.update('BMIN',0.0105,
+				      'Beam minor FWHM (degrees)')
 			hdulist.flush()
 		#except:
 			#print("Header update failed")
@@ -342,7 +350,8 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 		direction = file_involved.partition('_')[2]
 		if mommap_needed == False:
 			mommap_needed = redlog.check_val(file_involved,
-							 "mommaps",malt.vnum) 
+							 "mommaps",
+							 malt.vnum["mommaps"]) 
 		if mommap_needed or force:
 			if quicklook:
 				moment_map.do_source(source,lines,
@@ -361,7 +370,8 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 				print("Failed to copy moment maps")
 				pass
 		if not quicklook:
-			redlog.set_val(file_involved,"mommaps",malt.vnum)
+			redlog.set_val(file_involved,"mommaps",
+				       malt.vnum["mommaps"])
 
 def make_verification_plots(source,direction=None):
 	"""Make an image of the 0th moment map

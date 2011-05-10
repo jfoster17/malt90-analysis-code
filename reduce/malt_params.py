@@ -8,7 +8,8 @@
 base = '/DATA/MALT_1/MALT90/'
 
 #reduce_malt
-vnum = "1.5"
+#vnum = "1.6"
+vnum = {"rename":1.5,"ldata":1.5,"gzilla":1.6,"arrange":1.6,"mommaps":1.6}
 #sd = '/nfs/atapplic/malt/reduce/'                                                                                                                                                        
 sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/' #Seems to be new location
 data_dir = base+'data/'

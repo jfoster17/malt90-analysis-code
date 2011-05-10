@@ -79,7 +79,7 @@ class ReduceLog:
 		self.read()
 		undone_files = []
 		for i, entry in enumerate(self.rename):
-			if (self.ldata[i] < vcheck) or (self.gzilla[i] < vcheck) or (self.arrange[i] < vcheck) or (self.mommaps[i] < vcheck):
+			if (self.ldata[i] < vcheck["ldata"]) or (self.gzilla[i] < vcheck["gzilla"]) or (self.arrange[i] < vcheck["arrange"]) or (self.mommaps[i] < vcheck["mommaps"]):
 				source_try = self.source[i].rstrip('GLonGat_')
 				if source_try.startswith('G') and source_try[-2] != "_" and source_try[-1] != "B":
 					undone_files.append(source_try)
@@ -92,7 +92,7 @@ class ReduceLog:
 		self.read()
 		new_files = []
 		for i,entry in enumerate(self.rename):
-			if (entry < vcheck or self.smooth[i] < vcheck) and float(self.id[i]) > 0: #The ID check removes cal sources
+			if (entry < vcheck) and float(self.id[i]) > 0: #The ID check removes cal sources
 				if datestring in self.fname[i]:
 					new_files.append(self.fname[i])
 		fcntl.flock(g,8) #Release lock file
