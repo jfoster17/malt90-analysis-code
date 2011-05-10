@@ -44,7 +44,7 @@ def main():
 	for o,a in opts:
 		if o == "-n":
 			night = a
-		elif o == "t":
+		elif o == "-t":
 			do_yesterday = False
 		elif o == "-f":
 			force_list = a.split(',')
@@ -77,9 +77,10 @@ def main():
 
 		redlog = ReduceLog.ReduceLog()
 		sources = redlog.find_files_with_date(date.isoformat())
+		print(sources)
 		for one_source in sources:
 			reduce_malt.do_reduction(one_source,
-						 force_list = force_list,
+			      			 force_list = force_list,
 						 ignore_list = ignore_list)
 
 if __name__ == '__main__':

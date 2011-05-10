@@ -196,7 +196,11 @@ def make_dirs(dirname,lines):
 			os.mkdir(malt.data_dir+dirname+"/"+line)
 		except OSError:
 			pass
-
+		if dirname=="gridzilla":
+			try:
+				os.mkdir(malt.data_dir+dirname+"/"+line+"/flotsam")
+			except OSError:
+				pass
 def do_livedata(filenames,lines,force=False,quicklook=False):
 	"""Do Livedata if we need to"""
 	make_dirs("livedata",lines)
@@ -249,18 +253,19 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 					   str(freq),str(i-1),fileout,filein])
 				q.wait() 
 				try:
-					shutil.move(malt.data_dir
+					beam = fileout+'.beamRSS.fits'
+					counts = fileout+'.spectracounts.fits'
+					os.rename(malt.data_dir
 						    +'/gridzilla/'+line+'/'
-						    +fileout+'.beamRSS.fits',
+						    +beam,
 						    malt.data_dir+'/gridzilla/'
-						    +line+'/'+'flotsam')
-					shutil.move(malt.data_dir
+						    +line+'/flotsam/'+beam)
+					os.rename(malt.data_dir
 						    +'/gridzilla/'+line+'/'
-						    +fileout
-						    +'.spectracounts.fits',
+						    +counts,
 						    malt.data_dir
-						    +'/gridzilla/'+line+'/'
-						    +'flotsam')
+						    +'/gridzilla/'+line
+						    +'/flotsam/'+counts)
 				except IOError:
 					fail_flag = True
 					print("Failed to move flotsam files")
@@ -278,18 +283,19 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 					   str(i-1),fileout,file1,file2])
 				q.wait()
 				try:
-					shutil.move(malt.data_dir
+					beam = fileout+'.beamRSS.fits'
+					counts = fileout+'.spectracounts.fits'
+					os.rename(malt.data_dir
 						    +'/gridzilla/'+line+'/'
-						    +fileout+'.beamRSS.fits',
+						    +beam,
 						    malt.data_dir+'/gridzilla/'
-						    +line+'/'+'flotsam')
-					shutil.move(malt.data_dir
+						    +line+'/flotsam/'+beam)
+					os.rename(malt.data_dir
 						    +'/gridzilla/'+line+'/'
-						    +fileout
-						    +'.spectracounts.fits',
+						    +counts,
 						    malt.data_dir
-						    +'/gridzilla/'+line+'/'
-						    +'flotsam')
+						    +'/gridzilla/'+line
+						    +'/flotsam/'+counts)
 				except IOError:
 					print("Failed to move flotsam files")
 					#This does not return a useful error
@@ -401,13 +407,13 @@ def make_verification_plots(source,direction=None):
 						   +source+direction+"_"
 						   +line+"_snr0.fits"))
 		mask = np.zeros(snr.shape)
-		mask[2:28,2:28] = 1
+		mask[3:28,3:28] = 1
 		d,hmom = pyfits.getdata(malt.data_dir+'mommaps/'+line
 					+'/'+source+direction+"_"+line
 					+"_mommaps/"+source+direction+"_"
 					+line+"_mom0.fits",header=True)
 		plt.clf()
-		plt.imshow(d*mask)
+		plt.imshow(idl_stats.blur_image(d*mask,3))
 		a = plt.colorbar()
 		a.set_label("K km/s")
 		plt.title(source+" "+direction+" "+line
@@ -424,7 +430,7 @@ def make_verification_plots(source,direction=None):
 		vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']
 		       +h['CRVAL3'])/1e3
 	
-		snr_smooth = idl_stats.blur_image(snr,3)
+		snr_smooth = idl_stats.blur_image(snr,5)
 	
 		peak_pix = np.argmax(snr_smooth*mask)
 		pid = np.unravel_index(peak_pix,snr.shape)
