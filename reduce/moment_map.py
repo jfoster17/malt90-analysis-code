@@ -21,11 +21,12 @@ def get_velocity(source,auto=False,direction=None):
 	"""
 	velocity = 999
 	if not auto:
+		source_trim = source[0:14]
 		path_to_vel = os.path.join(malt.sd,
 					   'malt90_velocities_year1.txt')
 		f = open(path_to_vel,'r')
 		for line in f:
-			if line.split()[0].strip() == source:
+			if line.split()[0].strip() == source_trim:
 				velocity = float(line.split()[1])
 
 		f.close()
@@ -45,7 +46,7 @@ def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
 		try:
      			infile = get_filename(source,line,direction=direction)
 			d,h = pyfits.getdata(infile,header=True)
-		except OSError:
+		except IOError:
 			print("Failed to open datacube "+infile)
 			return(0)
 		nglat = d.shape[1]

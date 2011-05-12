@@ -82,7 +82,7 @@ def main():
 			do_all = True
 			print("Reducing all undone sources")
 		elif o == "-h":
-			print(__doc_)
+			print(__doc__)
 			sys.exit(1)
 		else:
 			assert False, "unhandled option"
@@ -358,7 +358,7 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 
 	for file_involved in filenames:
 	       	mommap_needed = False
-		direction = file_involved.partition('_')[2]
+		direction = file_involved.partition('_')[2].lstrip('_2')
 		if mommap_needed == False:
 			mommap_needed = redlog.check_val(file_involved,
 							 "mommaps",

@@ -47,6 +47,33 @@ class ReduceLog:
 		os.system('''awk '{print $1",",$2",",$3",",$4",",$5",",$6",",$7",",$8",",$9}' '''+malt.log_location+'''  > '''+malt.base+'''input_reduction_log.txt''')
 		fcntl.flock(g,8) #Release lock file
 
+	def check_cal(self,filename):
+		"""See if a cal file has been copied over."""
+		g = open(self.lock)
+		fcntl.flock(g,2)
+		self.read()
+		try:
+			i = self.fname.index(filename)
+		except ValueError:
+			fcntl.flock(g,8)
+			return(0)
+		fcntl.flock(g,8)
+		return(int(self.rename[i]))
+	
+	def mark_cal(self,filename,index):
+		"""Update the log when cal file is copied."""
+		g = open(self.lock)
+		fcntl.flock(g,2)
+		self.read()
+		try:
+			i = self.fname.index(filename)
+		except ValueError:
+			i = -1
+		self.rename[i] = index
+		self.save()
+		fcntl.flock(g,8)
+
+
 	def check_val(self,source_file,field,vcheck):
 		g = open(self.lock)
 		fcntl.flock(g,2) #Lock the lock file during access
@@ -195,6 +222,9 @@ class ReduceLog:
 				if not source: #Not a calibration source. i.e. a real map
 					if size > 300000000:
 						#Give each valid entry a unique name
+						#This code does not actually work well 
+						#if fullname == GXX.XX_2 already
+						#Currently this is a rare case.
 						source = fullname_catalog+'_'+scan_dir
 						i = 2
 						while source in self.source:
