@@ -100,13 +100,19 @@ class ReduceLog:
 			return(False)
 		fcntl.flock(g,8) #Release lock file
 	
-	def find_undone(self,vcheck):
+	def find_undone(self,vcheck,force=None):
+		"""Horribly hacked to work with forcing moment
+		maps. All comparisons should be case as floats"""
 		g = open(self.lock)
 		fcntl.flock(g,2) #Lock the lock file during access
 		self.read()
 		undone_files = []
+		if force == "mommaps":
+			vcheckm = 10. #Always do it
+		else:
+			vcheckm = vcheck["mommaps"]
 		for i, entry in enumerate(self.rename):
-			if (self.ldata[i] < vcheck["ldata"]) or (self.gzilla[i] < vcheck["gzilla"]) or (self.arrange[i] < vcheck["arrange"]) or (self.mommaps[i] < vcheck["mommaps"]):
+			if (self.ldata[i] < vcheck["ldata"]) or (self.gzilla[i] < vcheck["gzilla"]) or (self.arrange[i] < vcheck["arrange"]) or (float(self.mommaps[i]) < float(vcheckm)):
 				source_try = self.source[i].rstrip('GLonGat_')
 				if source_try.startswith('G') and source_try[-2] != "_" and source_try[-1] != "B":
 					undone_files.append(source_try)

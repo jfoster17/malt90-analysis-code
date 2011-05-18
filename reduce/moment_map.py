@@ -21,7 +21,9 @@ def get_velocity(source,auto=False,direction=None):
 	"""
 	velocity = 999
 	if not auto:
-		source_trim = source[0:14]
+		print("Looking up central velocity from table...")
+		source_trim = source[0:15]
+		print("Looking for "+source_trim)
 		path_to_vel = os.path.join(malt.sd,
 					   'malt90_velocities_year1.txt')
 		f = open(path_to_vel,'r')
@@ -31,7 +33,11 @@ def get_velocity(source,auto=False,direction=None):
 
 		f.close()
 	if velocity == 999 or auto:
+		path_to_auto_vel = os.path.join(malt.sd,'auto_vel.txt')
+		f = open(path_to_auto_vel,'a')
 		velocity = identify_velocity(source,direction=direction)
+		f.write(source[0:15]+'    '+str(velocity)+'\n')
+		f.close()
 	return(velocity)
 
 def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
@@ -95,8 +101,10 @@ def do_source(source,lines,direction=None,auto=False):
 		out_base = a.replace("gridzilla","mommaps")
 		out_dir = source+"_"+direction+line+"_mommaps"
 		try:
+
 			output_dir = os.path.join(malt.data_dir,
 						 "mommaps",line,out_dir)
+       			print("@@@ Trying to create: "+output_dir)
 			os.mkdir(output_dir)
 		except OSError:
 			pass

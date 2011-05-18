@@ -95,7 +95,11 @@ def main():
 	elif do_source:
 		sources = [source]
 	elif do_all:
-		sources = redlog.find_undone(malt.vnum)
+		if force_list:
+			force = force_list[0]
+		sources = redlog.find_undone(malt.vnum,force=force)
+		sources = list(set(sources)) #Eliminate dupes
+		print("Reducing the following source(s): "+str(sources))
 	try:
 		print("Reducing the following source(s): "+str(sources))
 	except UnboundLocalError:
@@ -356,14 +360,24 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 	print("Starting moment map creation...")
 	redlog = ReduceLog.ReduceLog()
 
+	fullmap_needed = False
 	for file_involved in filenames:
-	       	mommap_needed = False
+		part_file = False
+		if ('GLat' in file_involved) or ('GLon' in file_involved):
+			part_file = True
+		mommap_needed = False
 		direction = file_involved.partition('_')[2].lstrip('_2')
+		print("Direction = "+direction)
+		print("Length of direction = ",len(direction)) 
+		print("File involved = "+file_involved)
 		if mommap_needed == False:
 			mommap_needed = redlog.check_val(file_involved,
 							 "mommaps",
 							 malt.vnum["mommaps"]) 
-		if mommap_needed or force:
+			
+			if part_file:
+				fullmap_needed = True
+		if mommap_needed or force or (not part_file and fullmap_needed):
 			if quicklook:
 				moment_map.do_source(source,lines,
 						     direction=direction,
@@ -377,12 +391,14 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 			momtarg = malt.data_dir+'sources/'+source+'/'+endpart
 			try:
 				shutil.rmtree(momtarg)
+			except OSError:
+				print("No moment map directory to remove.")
+			try:
 				shutil.copytree(momsrc,momtarg)
 			except OSError:
 				print("Failed to copy moment maps")
 				print("From "+momsrc)
 				print("To "+momtarg)
-				pass
 		if not quicklook:
 			redlog.set_val(file_involved,"mommaps",
 				       malt.vnum["mommaps"])
