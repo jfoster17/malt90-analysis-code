@@ -107,7 +107,11 @@ def main():
 		print(__doc__)
 		sys.exit(2)
 	for one_source in sources:
-		do_reduction(one_source,force_list,ignore_list)
+		try:
+			do_reduction(one_source,force_list,ignore_list)
+		except IOError as (errno, strerror):
+			print "I/O error({0}): {1}".format(errno, strerror)
+
 
 def do_reduction(source,force_list=[],ignore_list=[],
 		 quicklook=False,onlyone=None):
