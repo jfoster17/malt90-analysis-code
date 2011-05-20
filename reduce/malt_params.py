@@ -18,7 +18,7 @@ data_dir = base+'data/'
 log_location = base+'reduction_log.txt'
 lock    = base+'lock.txt'
 source_dir = base+'raw_data/' #This is rather badly named
-classification_file = sd+'Malt90Catalog_classifications_v9.txt'
+classification_file = sd+'Malt90Catalog_classifications_v11.txt'
 
 #preprocess
 rename_dir = '/DATA/MALT_1/MALT90/data/renamed/'

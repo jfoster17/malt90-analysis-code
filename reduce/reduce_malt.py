@@ -109,8 +109,10 @@ def main():
 	for one_source in sources:
 		try:
 			do_reduction(one_source,force_list,ignore_list)
-		except IOError as (errno, strerror):
-			print "I/O error({0}): {1}".format(errno, strerror)
+		except IOError,e:
+			print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+			print("IO Error while processing "+one_source)
+			print(e)
 
 
 def do_reduction(source,force_list=[],ignore_list=[],
