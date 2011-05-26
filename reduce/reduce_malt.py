@@ -97,6 +97,8 @@ def main():
 	elif do_all:
 		if force_list:
 			force = force_list[0]
+		else:
+			force = None
 		sources = redlog.find_undone(malt.vnum,force=force)
 		sources = list(set(sources)) #Eliminate dupes
 		print("Reducing the following source(s): "+str(sources))
@@ -109,7 +111,7 @@ def main():
 	for one_source in sources:
 		try:
 			do_reduction(one_source,force_list,ignore_list)
-		except OSError,e:
+		except (IOError,OSError),e:
 			print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 			print("OS Error while processing "+one_source)
 			print(e)
@@ -155,7 +157,8 @@ def do_reduction(source,force_list=[],ignore_list=[],
 	else:
 		filenames = [source+"_GLat",source+"_GLon",source]
 	if 'mommaps' in force_list:
-		do_mommaps(source,filenames,lines,force=True,
+		#pass #Temporarily disable. Restore this!
+                do_mommaps(source,filenames,lines,force=True,
 			   quicklook=quicklook)
 	elif 'mommaps' in ignore_list:
 		pass

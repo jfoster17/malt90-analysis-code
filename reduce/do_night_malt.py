@@ -83,7 +83,7 @@ def main():
 				reduce_malt.do_reduction(one_source,
 			      			 force_list = force_list,
 						 ignore_list = ignore_list)
-       			except OSError,e:
+       			except (IOError,OSError),e:
 				print("%%%%%%%%%%%%%%%%%%%%%%%%")
 				print("IO Error while processing "+one_source)
 				print(e)

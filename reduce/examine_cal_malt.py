@@ -189,7 +189,7 @@ def main():
 	histpeak = {'hcop':'3.0 +/- 0.5 K','hcn':'2.2 +/- 0.3','hnc':'1.8 +/- 0.4','n2hp':'1.2 +/- 0.8'}
  	print("#################### Calibration file summary ###################")
 	print("Filename -- "+renamed_file)
-	print("Look at /DATA/MALT_1/MALT90/data/cal/"+renamed_file.replace('.rpf','.pdf')+" to see the spectra")
+	print("Look at /DATA/MALT_1/MALT90/cal/"+renamed_file.replace('.rpf','.pdf')+" to see the spectra")
 	for line in fitlines:
 		print("Fit paramters for: "+line)
 		print("    Peak     = "+str(data[0][line][0]))
