@@ -1,66 +1,46 @@
-#!/usr/bin/env python
-#encoding: utf-8
-"""
-Examine a calibration file. This is a single-pointing of G301 (or G337)
-used to verify setup and flux calibration. By default this just takes
-the most recent calibration file of G301 for the current UT.
+#!/usr/X11R6/bin/python
 
-Options
--n : Night   -- specify which night (UT) to use when finding the most
-                recent calibration file. Particularly useful if 
-	        observations span the UT date change.
--c : CalFile -- specify a particular calibration file to use. This 
-                is the raw UT date/time .rpf file.
--o : Object  -- specify which calibrator object to use. 
-                Valid options: G301 (default) or G337
--a : All     -- Combine all calibration files for a given source
-                to produce the highest SNR spectra. NOT WORKING
--h : Help    -- Display this help 
-"""
-
-
-import os,sys,getopt,glob,shutil,math,datetime
-from subprocess import *
-import numpy as np
-import ReduceLog
-import reduce_malt
-import malt_params as malt
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
 from asap import *
+import os,sys,getopt
+from subprocess import *
+import glob
+import malt_params as malt
+import ReduceLog
+import shutil
+import datetime
+import numpy as np
+import math
+
+#Malt90 line parameters
+lines = ["n2hp","13cs","h41a","ch3cn",\
+	"hc3n","13c34s","hnc","hc13ccn",\
+	"hcop","hcn","hnco413","hnco404",\
+	"c2h","hn13c","sio","h13cop"]
+freqs = [93173.772, 92494.303, 92034.475, 91985.316, \
+         90978.989, 90926.036, 90663.572, 90593.059, \
+         89188.526, 88631.847, 88239.027, 87925.238, \
+         87316.925, 87090.850, 86847.010, 86754.330]
 
 def main():
 	try:
-		opts,args = getopt.getopt(sys.argv[1:],"n:c:o:ah")
+		opts,args = getopt.getopt(sys.argv[1:],"n:c:a")
 	except getopt.GetoptError,err:
 		print(str(err))
 		print(__doc__)
 		sys.exit(2)
-	# Set default parameters #
 	now_utc = datetime.datetime.utcnow()
         date   = datetime.date(now_utc.year,now_utc.month,now_utc.day).isoformat()
 	do_all  = False
 	filename = None
-	source = "G301cal"
-	# Parse command line arguments #
 	for o,a in opts:
 		if o == "-n":
 		       date = a
-		elif o == "-c":
+		if o == "-c":
 			filename = a
-		elif o == "-o":
-			object = a
-		elif o == "-a":
+		if o == "-a":
+			source = a
 			do_all = True
-		elif o == "-h":
-			print(__doc__)
-			sys.exit(1)
-		else:
-			assert False, "unhandled option"
-			print(__doc__)
-			sys.exit(2)
-	# Copy file over #
+
 	redlog = ReduceLog.ReduceLog()
 	redlog.update(date,in_middle_of_obs = True)
 	if filename:
@@ -68,22 +48,17 @@ def main():
 	else:
 		filename,source = redlog.find_latest_calibration_on_date(date)
 	#Need to figure out how to handle "all" option well
+
 	source = source.capitalize()
-	#Return the nuber of the cal file. If we have not done this source
-	#Before it will return 0 and trigger the if
-	already_done = redlog.checkcal(filename) 
-	
-	if not already_done:
-		current_files = glob.glob(malt.cal_dir+source+"*.rpf")
-		index = 1
-		for file in current_files:
-			if date in file:
-				index+=1
-		renamed_file = source+"_"+date+"_"+str(index)+".rpf"
-		shutil.copyfile(malt.source_dir+filename,malt.cal_dir+renamed_file)
-       		redlog.mark_cal(filename,index) #Update redlog with index in rename slot
-	else:
-		renamed_file = source+"_"+date+"_"+str(already_done)+".rpf"
+	current_files = glob.glob(malt.cal_dir+source+"*.rpf")
+	index = 1
+	for file in current_files:
+		if date in file:
+			index+=1
+	renamed_file = source+"_"+date+"_"+str(index)+".rpf"
+	shutil.copyfile(malt.source_dir+filename,malt.cal_dir+renamed_file)
+	#Copy file over
+
 
 	if do_all and (source == "G301cal"):
 		filelist = glob.glob(malt.cal_dir+"G301cal*.rpf")
@@ -105,49 +80,38 @@ def main():
 		file = "G337cal_full"
 	else:
 		s = scantable(malt.cal_dir+renamed_file, average=True)
-	cal_name = renamed_file.rstrip(".rpf")
-	f_avt = plot_all_ifs(s,source,cal_name)
-	dataline = fit_lines(f_avt,cal_name)
-	update_database(source,dataline)
-	plot_context(source,cal_name)
-	print_report(source,cal_name)
 
-def prep_scantable(s):
-	# Set up basic ASAP stuff #
+#s.save(name="AllScans.rpf",format='ASAP')
+
        	s.set_doppler('RADIO')
 	s.set_freqframe('LSRK')
+
 	q=s.auto_quotient()
+
 	q.freq_align(insitu=True)
 	q_pol=q.average_pol(weight='tsys')
 	q_avt = q_pol.average_time(weight='tintsys',align=False)
 	f_avt=q_avt.auto_poly_baseline(insitu=False,order=1,edge=[300])
 	f_avt.smooth('gaussian',11,insitu=True)
+
+
 	f_avt.set_restfreqs(freqs=freqs,unit="MHz")
 	f_avt.set_unit("km/s")
-	return(f_avt)
-
-def plot_all_ifs(s,source,cal_name):
-	"""Plot all 16 IFs for a given scantable.
-	Return the averaged and set up scantable for other use.
-	"""
-
-	lines,freqs,ifs = reduce_malt.setup_lines()
-
-	f_avt = prep_scantable(s)
 	plotter.set_legend(mode=-1)
-	plotter.set_colors('blue')
-	plotter.set_abcissa(fontsize=18)
-	plotter.set_ordinate(fontsize=18)
-	plotter.set_title(title=".",fontsize=4)
 	plotter.set_range(-120,200,-0.25,3.5) #G301cal
-        #plotter.set_range(-120,200,-0.25,1.0) #Nessie
+#plotter.set_range(-120,200,-0.25,1.0) #Nessie
 
 	calfolder = malt.cal_dir+"CalFolder"
 	try:
 		os.mkdir(calfolder)
 	except OSError:
 		pass
-	#Plot each line and approximate central velocity
+
+	plotter.set_colors('blue')
+	plotter.set_abcissa(fontsize=18)
+	plotter.set_ordinate(fontsize=18)
+	plotter.set_title(title=".",fontsize=4)
+
 	for ifno,line in enumerate(lines):
 		sel1 = selector()
 		sel1.set_ifs(ifno)
@@ -158,24 +122,19 @@ def plot_all_ifs(s,source,cal_name):
 			plotter.axvline(x=-42.7,ymin=0,ymax=1,color='r') #G301cal
 		elif (source == "G337cal"):
 			plotter.axvline(x=-62.5,ymin=0,ymax=1,color='r') #G337cal
-	        #plotter.axvline(x=-39,ymin=0,ymax=1,color='r') #Nessie
+	#plotter.axvline(x=-39,ymin=0,ymax=1,color='r') #Nessie
        		plotter.save(calfolder+'/IF'+str(ifno).zfill(2)+'.eps')
 
-	# Montage the individual images together #
-	outname = malt.cal_dir+cal_name+".pdf"
+	outname = malt.cal_dir+renamed_file.rstrip(".rpf")+".pdf"
        	p = Popen(["montage",calfolder+"/IF*.eps", "-tile", "4x4", \
 				   "-geometry", "+0+0", outname])
 	p.wait()
-	return(f_avt)
 
-def fit_lines(f_avt):
-	lines,freqs,ifs = reduce_malt.setup_lines()
 
-	data = np.zeros(1,dtype=[('name','a20'),('tsys','f4'),('elev','f4'),
-				 ('n2hp','f4',6),('hnc','f4',6),
-				 ('hcop','f4',6),('hcn','f4',6)])
+	data = np.zeros(1,dtype=[('name','a20'),('tsys','f4'),('elev','f4'),('n2hp','f4',6),('hnc','f4',6),('hcop','f4',6),('hcn','f4',6)])
 
 	fitlines = ["hcop","hnc","n2hp","hcn"]
+#Plot each line and approximate central velocity
 	for ifno,line in enumerate(lines):
 		if line in fitlines:
 			sel1 = selector()
@@ -203,12 +162,23 @@ def fit_lines(f_avt):
 			g.fit()
 			failed = False
 			res = g.get_parameters()
-			area_err = 1. #Dummy area error
+			chi2 = g.get_chi2()
+			if chi2 > 1:
+				errfac = 1.
+	#errfac = math.sqrt(chi2)
+			else:
+				errfac = 1.
+
 			try:
-				data_line = [res['params'][0],res['errors'][0],
-					     res['params'][1],res['errors'][1],
-					     g.get_area(),area_err]
-				for j,entry in enumerate(data_line):
+				if n_gauss == 3:
+					area_err = math.sqrt((res['errors'][0]*errfac/res['params'][0])**2+(res['errors'][2]*errfac/res['params'][2])**2
+							     +(res['errors'][3]*errfac/res['params'][3])**2+(res['errors'][5]*errfac/res['params'][5])**2
+							     +(res['errors'][6]*errfac/res['params'][6])**2+(res['errors'][8]*errfac/res['params'][8])**2)
+				else:
+					area_err = math.sqrt((res['errors'][0]*errfac/res['params'][0])**2+(res['errors'][2]*errfac/res['params'][2])**2)
+				data_line = [res['params'][0],res['errors'][0]*errfac,res['params'][1],res['errors'][1]*errfac,g.get_area(),area_err]
+	
+       				for j,entry in enumerate(data_line):
 					data[0][line][j] = data_line[j]
 			except IndexError:
 				print("Failed Fit")
@@ -216,24 +186,6 @@ def fit_lines(f_avt):
 			if failed == False:
 				rcParams['plotter.gui'] = False
 				g.plot(residual=True,filename=malt.cal_dir+renamed_file.strip('.rpf')+"_no_smooth_"+line+".png")
-	return(data)		
-
-def update_database(source,dataline):
-	#Open current database
-	#Add dataline to database (check if it already exists)
-	#Look through cal folder find all matching cal files
-	#If cal file is not in database, add it.
-	#1) open scan_table
-	#2) prep
-	#3) fit
-	#Save out database.
-	pass
-
-def plot_context(source,cal_name):
-	"""Plot the latest addition to the databse in relation to all others"""
-	pass
-def print_report(source,cal_name):
-	"""Print out a text report about the quality of this calibration file"""
 	histpeak = {'hcop':'3.0 +/- 0.5 K','hcn':'2.2 +/- 0.3','hnc':'1.8 +/- 0.4','n2hp':'1.2 +/- 0.8'}
  	print("#################### Calibration file summary ###################")
 	print("Filename -- "+renamed_file)
@@ -245,6 +197,9 @@ def print_report(source,cal_name):
 #		print("Velocity = "+str(data[0][line][2]))
 	print("#################### Calibration file summary ###################")
 
+#Install gqview
+#	p = Popen(["xpdf",outname])
+	#p.wait()
 
 if __name__ == '__main__':
 	main()

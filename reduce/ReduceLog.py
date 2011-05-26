@@ -215,7 +215,10 @@ class ReduceLog:
 				f = open(self.class_file,'r')
 				for line in f:
 					pieces = line.split()
-					atlasgal_catalog = pieces[0]
+					try:
+						atlasgal_catalog = pieces[0]
+					except IndexError:
+						atlasgal_catalog = 0
 					if atlasgal_id == atlasgal_catalog:
 						fullname_catalog = pieces[1]
 						break
