@@ -79,9 +79,15 @@ def main():
 		sources = redlog.find_files_with_date(date.isoformat())
 		print(sources)
 		for one_source in sources:
-			reduce_malt.do_reduction(one_source,
+			try:
+				reduce_malt.do_reduction(one_source,
 			      			 force_list = force_list,
 						 ignore_list = ignore_list)
+       			except OSError,e:
+				print("%%%%%%%%%%%%%%%%%%%%%%%%")
+				print("IO Error while processing "+one_source)
+				print(e)
+
 
 if __name__ == '__main__':
 	main()

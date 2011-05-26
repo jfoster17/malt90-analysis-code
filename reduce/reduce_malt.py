@@ -109,9 +109,9 @@ def main():
 	for one_source in sources:
 		try:
 			do_reduction(one_source,force_list,ignore_list)
-		except IOError,e:
+		except OSError,e:
 			print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-			print("IO Error while processing "+one_source)
+			print("OS Error while processing "+one_source)
 			print(e)
 
 
