@@ -435,11 +435,14 @@ def make_verification_plots(source,direction=None):
 					+"_mommaps/"+source+direction+"_"
 					+line+"_mom0.fits",header=True)
 		plt.clf()
-		plt.imshow(idl_stats.blur_image(d*mask,3))
+		im = idl_stats.blur_image(d*mask,3)
+		plt.imshow(im[::-1,:])
 		a = plt.colorbar()
 		a.set_label("K km/s")
 		plt.title(source+" "+direction+" "+line
 			  +" integrated intensity")
+		plt.xticks((0,5,10,15,20,25),(-13,-8,-3,2,7,12))
+		plt.yticks((0,5,10,15,20,25),(-13,-8,-3,2,7,12))
 		plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
 		plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
 		plt.savefig(malt.data_dir+'verification/'+source+"_"
