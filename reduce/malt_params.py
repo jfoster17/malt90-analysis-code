@@ -28,3 +28,4 @@ rename_dir = '/DATA/MALT_1/MALT90/data/renamed/'
 
 #data_dir = "/DATA/MALT_1/MALT90/cal/"
 cal_dir = base+"cal/"
+ver_dir = base+"data/verification/"

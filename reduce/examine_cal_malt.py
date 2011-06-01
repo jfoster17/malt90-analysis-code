@@ -125,11 +125,11 @@ def main():
 	#plotter.axvline(x=-39,ymin=0,ymax=1,color='r') #Nessie
        		plotter.save(calfolder+'/IF'+str(ifno).zfill(2)+'.eps')
 
-	outname = malt.cal_dir+renamed_file.rstrip(".rpf")+".pdf"
+	outname = malt.cal_dir+renamed_file.rstrip(".rpf")+".png"
        	p = Popen(["montage",calfolder+"/IF*.eps", "-tile", "4x4", \
 				   "-geometry", "+0+0", outname])
 	p.wait()
-
+	shutil.copy(outname,malt.ver_dir)
 
 	data = np.zeros(1,dtype=[('name','a20'),('tsys','f4'),('elev','f4'),('n2hp','f4',6),('hnc','f4',6),('hcop','f4',6),('hcn','f4',6)])
 
@@ -185,11 +185,13 @@ def main():
 				failed = True
 			if failed == False:
 				rcParams['plotter.gui'] = False
-				g.plot(residual=True,filename=malt.cal_dir+renamed_file.strip('.rpf')+"_no_smooth_"+line+".png")
+				fname = malt.cal_dir+renamed_file.strip('.rpf')+"_no_smooth_"+line+".png"
+				g.plot(residual=True,filename=fname)
+				shutil.copy(fname,malt.ver_dir)
 	histpeak = {'hcop':'3.0 +/- 0.5 K','hcn':'2.2 +/- 0.3','hnc':'1.8 +/- 0.4','n2hp':'1.2 +/- 0.8'}
  	print("#################### Calibration file summary ###################")
 	print("Filename -- "+renamed_file)
-	print("Look at /DATA/MALT_1/MALT90/cal/"+renamed_file.replace('.rpf','.pdf')+" to see the spectra")
+	print("Look at /DATA/MALT_1/MALT90/cal/"+renamed_file.replace('.rpf','.png')+" to see the spectra")
 	for line in fitlines:
 		print("Fit paramters for: "+line)
 		print("    Peak     = "+str(data[0][line][0]))
