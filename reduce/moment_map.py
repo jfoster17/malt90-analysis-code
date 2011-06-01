@@ -52,7 +52,7 @@ def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
 		try:
      			infile = get_filename(source,line,direction=direction)
 			d,h = pyfits.getdata(infile,header=True)
-		except IOError:
+		except OSError:
 			print("Failed to open datacube "+infile)
 			return(0)
 		nglat = d.shape[1]
@@ -108,8 +108,11 @@ def do_source(source,lines,direction=None,auto=False):
 			os.mkdir(output_dir)
 		except OSError:
 			pass
-		make_moment_maps(infile,out_base,output_dir,
+		try:
+			make_moment_maps(infile,out_base,output_dir,
 				 central_velocity=central_velocity*1000)
+		except:
+			print("Failed to make moment map in"+output_dir)
 
 def create_basic_directories(lines):
 	"""Create subdirectories under mommaps"""

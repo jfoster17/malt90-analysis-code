@@ -279,7 +279,7 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 						    malt.data_dir
 						    +'/gridzilla/'+line
 						    +'/flotsam/'+counts)
-				except IOError:
+				except OSError:
 					fail_flag = True
 					print("Failed to move flotsam files")
 		if (not fail_flag) and (not quicklook):
@@ -309,7 +309,7 @@ def do_gridzilla(source,filenames,lines,freqs,ifs,force=False,quicklook=False):
 						    malt.data_dir
 						    +'/gridzilla/'+line
 						    +'/flotsam/'+counts)
-				except IOError:
+				except OSError:
 					print("Failed to move flotsam files")
 					#This does not return a useful error
 def create_source_folder(source,lines,force=False,quicklook=False):
@@ -393,7 +393,8 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 						     auto=True)
 			else:
 				moment_map.do_source(source,lines,
-						     direction=direction)
+						     direction=direction,
+						     auto=False)
 		for line in lines:
 			endpart = source+'_'+line+'_mommaps'
 			momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
