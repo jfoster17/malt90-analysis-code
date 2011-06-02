@@ -69,7 +69,7 @@ class ReduceLog:
 			i = self.fname.index(filename)
 		except ValueError:
 			i = -1
-		self.rename[i] = index
+		self.rename[i] = str(index)
 		self.save()
 		fcntl.flock(g,8)
 
@@ -136,9 +136,10 @@ class ReduceLog:
 		fcntl.flock(g,2)
 		self.read()
 		latest_cal = None
+		latest_src = None
 		for i,filename in enumerate(self.fname):
 			#This should step through in order
-			if ("cal" in self.source[i]):
+			if ("cal" in self.source[i]) and (datestring in self.fname[i]):
 				latest_cal = filename
 				latest_src = self.source[i].rstrip("_")
 		fcntl.flock(g,8)

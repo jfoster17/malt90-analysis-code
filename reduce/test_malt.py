@@ -29,6 +29,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from asap import *
+import pickle
 
 def main():
 	try:
@@ -67,12 +68,17 @@ def main():
 		id,source = redlog.get_name(filename)
 	else:
 		filename,source = redlog.find_latest_calibration_on_date(date)
-	#Need to figure out how to handle "all" option well
+	
+	if not filename:
+		print("No Calibration File Found")
+		sys.exit(2)
+        #Need to figure out how to handle "all" option well
 	source = source.capitalize()
 	#Return the nuber of the cal file. If we have not done this source
 	#Before it will return 0 and trigger the if
-	#already_done = redlog.checkcal(filename) 
-	already_done = False
+	already_done = redlog.check_cal(filename) 
+	print(already_done)
+#already_done = False
 
 	if not already_done:
 		current_files = glob.glob(malt.cal_dir+source+"*.rpf")
@@ -82,7 +88,7 @@ def main():
 				index+=1
 		renamed_file = source+"_"+date+"_"+str(index)+".rpf"
 		shutil.copyfile(malt.source_dir+filename,malt.cal_dir+renamed_file)
-       		#redlog.mark_cal(filename,index) #Update redlog with index in rename slot
+       		redlog.mark_cal(filename,index) #Update redlog with index in rename slot
 	else:
 		renamed_file = source+"_"+date+"_"+str(already_done)+".rpf"
 
@@ -108,8 +114,8 @@ def main():
 		s = scantable(malt.cal_dir+renamed_file, average=True)
 	cal_name = renamed_file.rstrip(".rpf")
 	f_avt = plot_all_ifs(s,source,cal_name)
-	dataline = fit_lines(f_avt)
-#	update_database(source,dataline)
+	dataline = fit_lines(f_avt,cal_name)
+	update_database(source,dataline)
 	#plot_context(source,cal_name)
 	print_report(source,cal_name)
 
@@ -164,25 +170,27 @@ def plot_all_ifs(s,source,cal_name):
        		plotter.save(calfolder+'/IF'+str(ifno).zfill(2)+'.eps')
 
 	# Montage the individual images together #
-	outname = malt.cal_dir+cal_name+".pdf"
+	outname = malt.cal_dir+cal_name+".png"
        	p = Popen(["montage",calfolder+"/IF*.eps", "-tile", "4x4", \
 				   "-geometry", "+0+0", outname])
 	p.wait()
 	return(f_avt)
 
-def fit_lines(f_avt):
+def fit_lines(f_avt,cal_name):
 	lines,freqs,ifs = reduce_malt.setup_lines()
 
-	data = np.zeros(1,dtype=[('name','a20'),('tsys','f4'),('elev','f4'),
+	dataline = np.zeros(1,dtype=[('name','a20'),('tsys','f4'),('elev','f4'),
 				 ('n2hp','f4',6),('hnc','f4',6),
 				 ('hcop','f4',6),('hcn','f4',6)])
-
+	dataline[0]['name'] = cal_name
 	fitlines = ["hcop","hnc","n2hp","hcn"]
 	for ifno,line in enumerate(lines):
 		if line in fitlines:
 			sel1 = selector()
 			sel1.set_ifs(ifno)
 			f_avt.set_selection(sel1)
+			dataline[0]['tsys'] = f_avt.get_tsys()[0]
+			dataline[0]['elev'] = f_avt.get_elevation()[0]
 			g = fitter()
 			g.set_scan(f_avt)
 			if line == "hcop" or line == "hnc":
@@ -211,39 +219,72 @@ def fit_lines(f_avt):
 					     res['params'][1],res['errors'][1],
 					     g.get_area(),area_err]
 				for j,entry in enumerate(data_line):
-					data[0][line][j] = data_line[j]
+					dataline[0][line][j] = data_line[j]
 			except IndexError:
 				print("Failed Fit")
 				failed = True
 			if failed == False:
 				rcParams['plotter.gui'] = False
-				g.plot(residual=True,filename=malt.cal_dir+renamed_file.strip('.rpf')+"_no_smooth_"+line+".png")
-	return(data)		
+				g.plot(residual=True,filename=malt.cal_dir
+				       +cal_name+
+				       "_no_smooth_"+line+".png")
+	return(dataline)		
+
+def read_database(source):
+	cal_data_file = open(malt.cal_dir+source+"_caldbase.pkl",'rb')
+	cal_data      = pickle.load(cal_data_file)
+	cal_data_file.close()
+	return(cal_data)
+
+def write_database(source,cal_data):
+       	cal_data_file = open(malt.cal_dir+source+"_caldbase.pkl",'wb')
+	pickle.dump(cal_data,cal_data_file)
+	cal_data_file.close()
 
 def update_database(source,dataline):
 	#Open current database
-	#Add dataline to database (check if it already exists)
-	#Look through cal folder find all matching cal files
-	#If cal file is not in database, add it.
-	#1) open scan_table
-	#2) prep
-	#3) fit
+	cal_data = read_database(source)
+        #Add dataline to database (check if it already exists)
+	#Super inefficient way to do this
+	length = len(cal_data)
+	print(length)
+	make_new = False
+	if make_new:
+		cal_data = dataline
+		write_database(source,cal_data)
+		return
+
+	if dataline['name'] in cal_data['name']:
+		for i in range(length):
+			if cal_data[i]['name'] == dataline['name']:
+				cal_data[i] = dataline
+	else:
+		new = np.zeros(length+1,dtype=[('name','a20'),
+				 ('tsys','f4'),('elev','f4'),
+				 ('n2hp','f4',6),('hnc','f4',6),
+				 ('hcop','f4',6),('hcn','f4',6)])
+		new[0:-1] = cal_data
+		new[-1] = dataline
+		cal_data = new
+#	print(cal_data)
 	#Save out database.
-	pass
+	write_database(source,cal_data)
 
 def plot_context(source,cal_name):
 	"""Plot the latest addition to the databse in relation to all others"""
 	pass
+
 def print_report(source,cal_name):
 	"""Print out a text report about the quality of this calibration file"""
+       	fitlines = ["hcop","hnc","n2hp","hcn"]
 	histpeak = {'hcop':'3.0 +/- 0.5 K','hcn':'2.2 +/- 0.3','hnc':'1.8 +/- 0.4','n2hp':'1.2 +/- 0.8'}
  	print("#################### Calibration file summary ###################")
-	print("Filename -- "+renamed_file)
-	print("Look at /DATA/MALT_1/MALT90/data/cal/"+renamed_file.replace('.rpf','.pdf')+" to see the spectra")
+	print("Filename -- "+cal_name+'.rpf')
+	print("Look at /DATA/MALT_1/MALT90/data/cal/"+cal_name+'.pdf'+" to see the spectra")
 	for line in fitlines:
 		print("Fit paramters for: "+line)
-		print("    Peak     = "+str(data[0][line][0]))
-		print("    Normal Range is "+histpeak[line])
+		#print("    Peak     = "+str(data[0][line][0]))
+		#print("    Normal Range is "+histpeak[line])
 #		print("Velocity = "+str(data[0][line][2]))
 	print("#################### Calibration file summary ###################")
 
