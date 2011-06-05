@@ -116,7 +116,7 @@ def main():
 	f_avt = plot_all_ifs(s,source,cal_name)
 	dataline = fit_lines(f_avt,cal_name)
 	update_database(source,dataline)
-	#plot_context(source,cal_name)
+	plot_context(source,cal_name)
 	print_report(source,cal_name)
 
 def prep_scantable(s):
@@ -272,19 +272,65 @@ def update_database(source,dataline):
 
 def plot_context(source,cal_name):
 	"""Plot the latest addition to the databse in relation to all others"""
-	pass
+	cal_data = read_database(source)
+#	print(cal_data)
+	new_data = cal_data[cal_data['name'] == cal_name]
+	old_data = cal_data[cal_data['name'] != cal_name]
+	n_old = len(old_data)
+#	print(new_data['hnc'][0][0])
+       	fitlines = ["hcop","hnc","n2hp","hcn"]
+	colors = ["red","green","blue","purple"]
+	nums = [4,3,2,1]
+	for line,ccolor,i in zip(fitlines,colors,nums):
+		if i == 4:
+			ax1 = pylab.subplot(4,1,i)
+			pylab.ylabel("Peak T [K]",fontsize=9)
+		else:
+			ax2 = pylab.subplot(4,1,i,sharex=ax1)
+			pylab.setp(ax2.get_xticklabels(),visible=False)
+		dates2 = old_data['name']
+		dates = [date[-12:] for date in dates2]
+		old_line = old_data[line]
+		prior_mean = np.median(old_line[:,0])
+		prior_range = np.std(old_line[:,0])
+		yup = prior_mean+prior_range
+		ydo = prior_mean-prior_range
+		pylab.fill([-1,-1,n_old+1,n_old+1],[ydo,yup,yup,ydo],color=ccolor,alpha=0.1)
+      		yup = prior_mean+prior_range*2
+		ydo = prior_mean-prior_range*2
+		pylab.fill([-1,-1,n_old+1,n_old+1],[ydo,yup,yup,ydo],color=ccolor,alpha=0.1)
+		pylab.plot(old_line[:,0],'o',color=ccolor,ms=4)
+		pylab.plot([n_old],[new_data[line][0][0]],'*',mec=ccolor,mfc=ccolor,ms=10)
+		pylab.title(line,fontsize=11)
+		pylab.xlim(-1,n_old+1) 
+		locs,lables = pylab.xticks()
+		pylab.xticks(np.arange(-1,n_old+1),['']+list(dates)+[new_data['name'][0][-12:]]+[''],rotation=30,fontsize=9)
+#		locs,labels = pylab.yticks()
+		pylab.yticks(fontsize=9)
+	pylab.savefig(malt.ver_dir+"LatestCal.png")
+
 
 def print_report(source,cal_name):
 	"""Print out a text report about the quality of this calibration file"""
+	cal_data = read_database(source)
+#	print(cal_data)
+	new_data = cal_data[cal_data['name'] == cal_name]
+	old_data = cal_data[cal_data['name'] != cal_name]
        	fitlines = ["hcop","hnc","n2hp","hcn"]
 	histpeak = {'hcop':'3.0 +/- 0.5 K','hcn':'2.2 +/- 0.3','hnc':'1.8 +/- 0.4','n2hp':'1.2 +/- 0.8'}
+	for line in fitlines:
+		old_line = old_data[line]
+		median = np.median(old_line[:,0])
+		stan =  np.std(old_line[:,0])
+		histpeak[line] = "%2.1f +/- %2.1f" % (median,stan)
+
  	print("#################### Calibration file summary ###################")
 	print("Filename -- "+cal_name+'.rpf')
 	print("Look at /DATA/MALT_1/MALT90/data/cal/"+cal_name+'.pdf'+" to see the spectra")
 	for line in fitlines:
 		print("Fit paramters for: "+line)
-		#print("    Peak     = "+str(data[0][line][0]))
-		#print("    Normal Range is "+histpeak[line])
+		print("    Peak     = "+str(new_data[0][line][0]))
+		print("    Normal Range is "+histpeak[line])
 #		print("Velocity = "+str(data[0][line][2]))
 	print("#################### Calibration file summary ###################")
 
