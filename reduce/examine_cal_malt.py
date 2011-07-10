@@ -273,7 +273,8 @@ def update_database(source,dataline):
 
 def plot_context(source,cal_name):
 	"""Plot the latest addition to the databse in relation to all others"""
-	cal_data = read_database(source)
+	temp_cal_data = read_database(source)
+	cal_data = np.sort(temp_cal_data, order='name')
 #	print(cal_data)
 	new_data = cal_data[cal_data['name'] == cal_name]
 	old_data = cal_data[cal_data['name'] != cal_name]
@@ -305,7 +306,13 @@ def plot_context(source,cal_name):
 		pylab.title(line,fontsize=11)
 		pylab.xlim(-1,n_old+1) 
 		locs,lables = pylab.xticks()
-		pylab.xticks(np.arange(-1,n_old+1),['']+list(dates)+[new_data['name'][0][-12:]]+[''],rotation=30,fontsize=9)
+		xpos = np.arange(-1,n_old+1)
+		xlab = ['']+list(dates)+[new_data['name'][0][-12:]]+['']
+		if len(xpos) % 2 == 0:
+			st = 1
+		else:
+			st = 0
+		pylab.xticks(xpos[st::2],xlab[st::2],rotation=30,fontsize=5,ha='right')
 #		locs,labels = pylab.yticks()
 		pylab.yticks(fontsize=9)
 	pylab.savefig(malt.ver_dir+"LatestCal.png")
