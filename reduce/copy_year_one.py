@@ -11,8 +11,12 @@ import reduce_malt
 import malt_params
 import shutil
 
+dest = 'year1_mistargeted'
+
+
 def main():
-	f = open('malt90_velocities_year1.txt','r')
+#	f = open('malt90_velocities_year1.txt','r')
+	f = open('malt90_badsources_year1.txt','r')
 	source_list = []
 	for line in f:
 		name,vhand = line.split()
@@ -23,45 +27,45 @@ def main():
 		reverse = False
 	#source_list = ['G318.725-00.224'] #Ugly code to do one source
 	for sourcename in source_list:
-		copy_year1_source("gridzilla",sourcename,reverse)
-		copy_year1_source("livedata",sourcename,reverse)
-		copy_year1_source("mommaps",sourcename,reverse)
-		copy_year1_source("mommaps",sourcename,reverse)
-		copy_year1_source_plain("renamed",sourcename,reverse)
-		copy_year1_source_plain("sources",sourcename,reverse)
+		copy_source("gridzilla",sourcename,reverse)
+		copy_source("livedata",sourcename,reverse)
+		copy_source("mommaps",sourcename,reverse)
+		copy_source("mommaps",sourcename,reverse)
+		copy_source_plain("renamed",sourcename,reverse)
+		copy_source_plain("sources",sourcename,reverse)
 
-def copy_year1_source(directory,sourcename,reverse):
+def copy_source(directory,sourcename,reverse):
 	lines,freqs,ifs = reduce_malt.setup_lines()
 	for line in lines:
 		if reverse:
 			search_dir = os.path.join(malt_params.data_dir,
-						  'year1',directory,line)
+						  dest,directory,line)
 		else:
 			search_dir = os.path.join(malt_params.data_dir,directory,line)
 		print(search_dir+'/'+sourcename+'*')
 		files = glob.glob(search_dir+'/'+sourcename+'*')
 		for fin in files:
 			if reverse:
-				fout = fin.replace('/data/year1/','/data/')
+				fout = fin.replace('/data/'+dest+'/','/data/')
 			else:
-				fout = fin.replace('/data/','/data/year1/')
+				fout = fin.replace('/data/','/data/'+dest+'/')
 			print("From: "+fin)
 			print("To: "+fout)
 	     		shutil.move(fin,fout)
 
-def copy_year1_source_plain(directory,sourcename,reverse):
+def copy_source_plain(directory,sourcename,reverse):
 	if reverse:
 		search_dir = os.path.join(malt_params.data_dir,
-					  'year1',directory)
+					  dest,directory)
 	else:
 		search_dir = os.path.join(malt_params.data_dir,directory)
 	print(search_dir+'/'+sourcename+'*')
 	files = glob.glob(search_dir+'/'+sourcename+'*')
 	for fin in files:
 		if reverse:
-			fout = fin.replace('/data/year1/','/data/')
+			fout = fin.replace('/data/'+dest+'/','/data/')
 		else:
-			fout = fin.replace('/data/','/data/year1/')
+			fout = fin.replace('/data/','/data/'+dest+'/')
 		print("From: "+fin)
 		print("To: "+fout)
 		shutil.move(fin,fout)
