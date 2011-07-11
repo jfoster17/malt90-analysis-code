@@ -11,7 +11,7 @@ import reduce_malt
 import malt_params
 import shutil
 
-dest = 'year1_mistargeted'
+dest = 'year1'
 
 
 def main():
@@ -25,6 +25,7 @@ def main():
 		reverse = sys.argv[1]
 	except:
 		reverse = False
+	source_list = ['G310.880+00.005_2']
 	#source_list = ['G318.725-00.224'] #Ugly code to do one source
 	for sourcename in source_list:
 		copy_source("gridzilla",sourcename,reverse)
