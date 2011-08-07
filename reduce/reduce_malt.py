@@ -396,9 +396,17 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 						     direction=direction,
 						     auto=False)
 		for line in lines:
-			endpart = source+'_'+line+'_mommaps'
-			momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
-			momtarg = malt.data_dir+'sources/'+source+'/'+endpart
+			if quicklook:
+				endpart = source+'_'+direction+'_'+line+'_mommaps'
+			else:
+				endpart = source+'_'+line+'_mommaps'
+			
+			if quicklook:
+				momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
+				momtarg = malt.data_dir+'sources/'+source+'/'+endpart
+			else:
+				momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
+				momtarg = malt.data_dir+'sources/'+source+'/'+endpart
 			try:
 				shutil.rmtree(momtarg)
 			except OSError:
