@@ -56,7 +56,9 @@ def main():
 	reduce_malt.do_reduction(source,
 				 force_list=['ldata','gzilla','mommaps'],
 				 quicklook=True,onlyone=direction)
-	reduce_malt.make_verification_plots(source,direction)
+#	print("This is original direction")
+	#print(direction)
+	#reduce_malt.make_verification_plots(source,direction=direction)
 
 		
 

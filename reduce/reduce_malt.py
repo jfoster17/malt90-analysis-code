@@ -167,7 +167,7 @@ def do_reduction(source,force_list=[],ignore_list=[],
 			   quicklook=quicklook)
 	### Make Verification Images ###
 	### Always do this step too  ###
-	make_verification_plots(source)
+	make_verification_plots(source,direction=onlyone)
 
 def setup_lines(quicklook=False):
 	if quicklook:
@@ -401,16 +401,13 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 			else:
 				endpart = source+'_'+line+'_mommaps'
 			
-			if quicklook:
-				momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
-				momtarg = malt.data_dir+'sources/'+source+'/'+endpart
-			else:
-				momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
-				momtarg = malt.data_dir+'sources/'+source+'/'+endpart
+			momsrc = malt.data_dir+'mommaps/'+line+'/'+endpart
+			momtarg = malt.data_dir+'sources/'+source+'/'+endpart
 			try:
 				shutil.rmtree(momtarg)
 			except OSError:
 				print("No moment map directory to remove.")
+				print("Did not remove: "+momtarg)
 			try:
 				shutil.copytree(momsrc,momtarg)
 			except OSError:
@@ -431,6 +428,8 @@ def make_verification_plots(source,direction=None):
 		direction = ""
 	else:
 		direction = "_"+direction
+	#print("This is direction")
+	#print(direction)
 	for line in lines:
 		cube,h = pyfits.getdata(malt.data_dir+'gridzilla/'
 					+line+'/'+source+direction+"_"
@@ -458,7 +457,7 @@ def make_verification_plots(source,direction=None):
 		plt.ylabel("Galactic Latitude Offset [9 arcsec pixels]")
 		plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
 		plt.savefig(malt.data_dir+'verification/'+source+"_"
-			    +line+"_mom0"+direction+".png")
+			    +line+"_mom0"+".png")
 	
 		nspec = h['NAXIS3']
 		vmin = hmom['VMIN']
@@ -483,7 +482,7 @@ def make_verification_plots(source,direction=None):
 		plt.xlabel("Velocity [km/s]")
 		plt.ylabel("T [K]")
 		plt.savefig(malt.base+'data/verification/'+source+"_"
-			    +line+"_velcheck"+direction+".png")
+			    +line+"_velcheck"+".png")
 
 
 if __name__ == '__main__':
