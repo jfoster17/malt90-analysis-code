@@ -29,3 +29,7 @@ rename_dir = '/DATA/MALT_1/MALT90/data/renamed/'
 #data_dir = "/DATA/MALT_1/MALT90/cal/"
 cal_dir = base+"cal/"
 ver_dir = base+"data/verification/"
+
+#These are paths used by do_by_hand.py
+byhand_rename_dir = base+'data/byhand/renamed/'
+byhand_data_dir   = base+'data/byhand/'

@@ -325,8 +325,8 @@ def create_source_folder(source,lines,force=False,quicklook=False):
 		except OSError:
 			pass
 		filename = source+'_'+line+'_MEAN.fits'
-		#src  = malt.data_dir+'gridzilla/'+line+'/'+filename
-		src  = '../../gridzilla/'+line+'/'+filename
+		src  = malt.data_dir+'gridzilla/'+line+'/'+filename
+		#src  = '../../gridzilla/'+line+'/'+filename
 		targ = malt.data_dir+'sources/'+source+'/'+filename
 		try:
 			os.unlink(targ)

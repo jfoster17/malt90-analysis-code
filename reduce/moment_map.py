@@ -13,7 +13,7 @@ import pylab
 import idl_stats
 import malt_params as malt
 
-def get_velocity(source,auto=False,direction=None):
+def get_velocity(source,auto=False,direction=None,altdir=None):
 	"""Get a velocity for a source
 	using either the HCO+ and HNC lines or
 	looking up from a table. Try table first
@@ -35,12 +35,12 @@ def get_velocity(source,auto=False,direction=None):
 	if velocity == 999 or auto:
 		path_to_auto_vel = os.path.join(malt.sd,'auto_vel.txt')
 		f = open(path_to_auto_vel,'a')
-		velocity = identify_velocity(source,direction=direction)
+		velocity = identify_velocity(source,direction=direction,altdir=altdir)
 		f.write(source[0:15]+'    '+str(velocity)+'\n')
 		f.close()
 	return(velocity)
 
-def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
+def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None,altdir=None):
 	"""Identify a source velocity based on HCO+
 	Later I want to add HNC
 	"""
@@ -50,7 +50,7 @@ def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
 		direction = direction+"_"
 	for line in lines:
 		try:
-     			infile = get_filename(source,line,direction=direction)
+     			infile = get_filename(source,line,direction=direction,altdir=altdir)
 			d,h = pyfits.getdata(infile,header=True)
 		except OSError:
 			print("Failed to open datacube "+infile)
@@ -86,22 +86,26 @@ def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None):
 	ind_vels = np.array(ind_vels)
 	return(np.median(ind_vels))
 
-def do_source(source,lines,direction=None,auto=False):
+def do_source(source,lines,direction=None,auto=False,altdir=None):
 	print("Sourcename: "+source)
-	central_velocity = get_velocity(source,auto,direction)
+	central_velocity = get_velocity(source,auto,direction,altdir)
 	print("Center Velocity = "+str(central_velocity)+" km/s")
-	create_basic_directories(lines)
+	create_basic_directories(lines,altdir)
 	#create_output_directories(source,lines)
        	if direction:
 	       	direction = direction+"_"
+	else:
+		direction = ""
 	for line in lines:
-		infile = get_filename(source,line,direction)
+		infile = get_filename(source,line,direction,altdir)
 		#print(infile)
 		a = infile[:-9]
 		out_base = a.replace("gridzilla","mommaps")
 		out_dir = source+"_"+direction+line+"_mommaps"
+		if altdir:
+			malt.data_dir = altdir
 		try:
-
+			
 			output_dir = os.path.join(malt.data_dir,
 						 "mommaps",line,out_dir)
        			print("@@@ Trying to create: "+output_dir)
@@ -114,9 +118,11 @@ def do_source(source,lines,direction=None,auto=False):
 		except:
 			print("Failed to make moment map in"+output_dir)
 
-def create_basic_directories(lines):
+def create_basic_directories(lines,altdir=None):
 	"""Create subdirectories under mommaps"""
 	for line in lines:
+		if altdir:
+			malt.data_dir = altdir
 		try:
 			moment_dir = os.path.join(malt.data_dir,"mommaps",line)
 			os.mkdir(moment_dir)
@@ -124,12 +130,14 @@ def create_basic_directories(lines):
 			pass
 	
 	
-def get_filename(source,line,direction=None):
+def get_filename(source,line,direction=None,altdir=None):
 	"""Assumes direction has a _ at the end"""
 	if not direction:
 		filename = source+"_"+line+"_MEAN.fits"
 	else:
 		filename = source+"_"+direction+line+"_MEAN.fits"
+	if altdir:
+		malt.data_dir = altdir
 	full_path = os.path.join(malt.data_dir,"gridzilla",line,filename)
 	return(full_path)
 
