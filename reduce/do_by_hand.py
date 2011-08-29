@@ -11,7 +11,7 @@ Options
 -h : Display this help
 -s : Specify the source name
 -f : List raw data files to combine
-
+-p : Do reduction for Patricio
 """
 
 import sys,os,getopt
@@ -26,21 +26,25 @@ import preprocess_malt,reduce_malt,ReduceLog,moment_map
 
 def main():
 	try:
-		opts,args = getopt.getopt(sys.argv[1:],"s:f:h")
+		opts,args = getopt.getopt(sys.argv[1:],"s:f:hp")
 	except getopt.GetoptError,err:
 		print(str(err))
 		print(__doc__)
 		sys.exit(2)
+	patricio_flag = False
 	for o,a in opts:
+		if o == "-p":
+			patricio_flag = True
 		if o == "-s":
 			source = a
 		if o == "-f":
 			input_files = a.split(",")
+			print(input_files)
 		if o == "-h":
 			print(__doc__)
 			sys.exit(1)
 	working_names = copy_files(source,input_files)
-	reduce_map(source,working_names)
+	reduce_map(source,working_names,patricio_flag)
 
 def copy_files(source,input_files):
 #	print(source)
@@ -55,9 +59,9 @@ def copy_files(source,input_files):
 	return(working_names)
 
 
-def do_gridzilla(source,working_names):
+def do_gridzilla(source,working_names,patricio_flag=False):
 	### Do Gridzilla ###
-	lines,freqs,ifs = reduce_malt.setup_lines()
+	lines,freqs,ifs = reduce_malt.setup_lines(patricio_flag=patricio_flag)
 
 	# First do all the individual files so we 
 	# can check them later for quality
@@ -66,7 +70,7 @@ def do_gridzilla(source,working_names):
 			fout = fname+"_"+line
 			fin  = fname+"_"+line+".sdfits"
 			q = sp.Popen(["glish",'-l',malt.sd+
-				   'gzill_malt90_byhand.g',line,
+				   'gzill_malt90_patricio.g',line,
 				   str(freq),str(i-1),fout,
 				   fin])
 			q.wait()
@@ -84,33 +88,33 @@ def do_gridzilla(source,working_names):
 		nfiles = len(af)
 		if nfiles == 1:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_byhand.g',
+				      'gzill_malt90_patricio.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0]])
 		elif nfiles == 2:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_byhand.g',
+				      'gzill_malt90_patricio.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1]])
 		elif nfiles == 3:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_byhand.g',
+				      'gzill_malt90_patricio.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2]])
 		elif nfiles == 4:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_byhand.g',
+				      'gzill_malt90_patricio.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2],af[3]])
 		elif nfiles == 5:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_byhand.g',
+				      'gzill_malt90_patricio.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2],
 				      af[3],af[4]])
 		elif nfiles == 6:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_byhand.g',
+				      'gzill_malt90_patricio.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2],
 				      af[3],af[4],af[5]])
@@ -118,17 +122,17 @@ def do_gridzilla(source,working_names):
 		q.wait()
 
 
-def reduce_map(source,working_names):
+def reduce_map(source,working_names,patricio_flag=False):
 	
 	### Do Livedata ###
 	for filename in working_names:
-		p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_byhand.g',
+		p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_patricio.g',
                           '-plain',filename+".rpf"])
 		p.wait()
 
-	do_gridzilla(source,working_names)
+	do_gridzilla(source,working_names,patricio_flag = patricio_flag)
 
-	lines,freqs,ifs = reduce_malt.setup_lines()
+	lines,freqs,ifs = reduce_malt.setup_lines(patricio_flag=patricio_flag)
 	### Do Source Folder ###
 	for line in lines:
 		try:

@@ -131,7 +131,7 @@ class ReduceLog:
 		fcntl.flock(g,8) #Release lock file
 		return(new_files)
 	
-	def find_latest_calibration_on_date(self,datestring="20"):
+	def find_latest_calibration_on_date(self,datestring="20",ignore_date = False):
 		g = open(self.lock)
 		fcntl.flock(g,2)
 		self.read()
@@ -139,7 +139,7 @@ class ReduceLog:
 		latest_src = None
 		for i,filename in enumerate(self.fname):
 			#This should step through in order
-			if ("cal" in self.source[i]) and (datestring in self.fname[i]):
+			if ("cal" in self.source[i]) and ((datestring in self.fname[i]) or ignore_date):
 				latest_cal = filename
 				latest_src = self.source[i].rstrip("_")
 		fcntl.flock(g,8)
@@ -208,11 +208,18 @@ class ReduceLog:
 					else:
 						print("Failed to find source name for "+file)
 						source = '____________________'
-				#Special case for badly-named 7mm pointing sources
+				
+#Special case for badly-named 7mm pointing sources
 				if atlasgal_id in string.letters:
 					atlasgal_id = 0
 					source = '____________________'
-
+				#Special case for Patricio Files
+				else:
+					try:
+						aid = float(atlasgal_id)
+					except ValueError:
+						atlasgal_id = 0
+						fullname_catalog = "IRDC28"
 				f = open(self.class_file,'r')
 				for line in f:
 					pieces = line.split()

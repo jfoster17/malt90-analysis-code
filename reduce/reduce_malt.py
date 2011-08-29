@@ -169,12 +169,23 @@ def do_reduction(source,force_list=[],ignore_list=[],
 	### Always do this step too  ###
 	make_verification_plots(source,direction=onlyone)
 
-def setup_lines(quicklook=False):
+def setup_lines(quicklook=False,patricio_flag=False):
 	if quicklook:
 		### Lines to use for quick look ###
 		lines = ["hnc","hcop"]
 		freqs = [90663.572,89188.526]
 		ifs   = [7,9]
+	elif patricio_flag:
+        	### Special code for Patricio ###
+		lines = ["n2hp","13cs","h41a","ch3cn",
+			 "hc3n","13c34s","hnc","hc13ccn",
+			 "hcop","hcn","hnco413","hnco404",
+			 "c2h","hn13c"]
+		freqs = [96741.420, 96412.961, 95914.310, 95169.516, 
+			 94410.895, 93870.098, 93173.772, 92494.303, 
+			 91985.316, 90978.989, 90926.036, 90663.572, 
+			 90593.059, 89188.526]	
+		ifs   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
 	else:
         	### Malt90 Main Survey ###
 		lines = ["n2hp","13cs","h41a","ch3cn",
@@ -186,6 +197,7 @@ def setup_lines(quicklook=False):
 			 89188.526, 88631.847, 88239.027, 87925.238, 
 			 87316.925, 87090.850, 86847.010, 86754.330]	
 		ifs   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+
 	### Malt90 backward sources (first day) ###
 #	lines = ["ch3cn","h41a","13cs","n2hp",
 #		 "hc13ccn","hnc","13c34s","hc3n",
