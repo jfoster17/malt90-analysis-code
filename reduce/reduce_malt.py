@@ -228,17 +228,22 @@ def make_dirs(dirname,lines):
 				pass
 def do_livedata(filenames,lines,force=False,quicklook=False):
 	"""Do Livedata if we need to"""
+	print("Entering Livedata function")
 	make_dirs("livedata",lines)
 	redlog = ReduceLog.ReduceLog()
 	for filename in filenames:
 		print(filename)
+		print(malt.data_dir+'renamed/'+filename)
 		if os.path.exists(malt.data_dir+'renamed/'+filename):
+			print("File Exists")
 			ftemp = filename
 			ldata_needed = redlog.check_val(ftemp.replace(
 					'.rpf',''),"ldata",malt.vnum["ldata"])
+			print(force)
 			if ldata_needed or force:
 				#Could use check_call here to see if this dies
 				if not quicklook:
+					print("Doing Livedata")
 					p = Popen(["glish",'-l',
 						   malt.sd+'ldata_malt90.g',
 						   '-plain',filename])
