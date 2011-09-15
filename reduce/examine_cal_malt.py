@@ -44,10 +44,12 @@ def main():
 	do_all  = False
 	filename = None
 	source = "G301cal"
+	ignore_date = True
 	# Parse command line arguments #
 	for o,a in opts:
 		if o == "-n":
 		       date = a
+		       ignore_data = False
 		elif o == "-c":
 			filename = a
 		elif o == "-o":
@@ -67,19 +69,23 @@ def main():
 	if filename:
 		id,source = redlog.get_name(filename)
 	else:
-		filename,source = redlog.find_latest_calibration_on_date(date)
+		filename,source = redlog.find_latest_calibration_on_date(date,ignore_date=ignore_date)
 	
 	if not filename:
 		print("No Calibration File Found")
 		sys.exit(2)
         #Need to figure out how to handle "all" option well
 	source = source.capitalize()
-	#Return the nuber of the cal file. If we have not done this source
+	#Return the number of the cal file. If we have not done this source
 	#Before it will return 0 and trigger the if
 	already_done = redlog.check_cal(filename) 
+	print(filename)
 	print(already_done)
+	#print(3+"bo")
 #already_done = False
-
+	if ignore_date:
+		date = filename[0:10]
+		print("Doing file from: "+date)
 	if not already_done:
 		current_files = glob.glob(malt.cal_dir+source+"*.rpf")
 		index = 1
