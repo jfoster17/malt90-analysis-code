@@ -49,7 +49,7 @@ def main():
 	for o,a in opts:
 		if o == "-n":
 		       date = a
-		       ignore_data = False
+		       ignore_date = False
 		elif o == "-c":
 			filename = a
 		elif o == "-o":
@@ -76,6 +76,7 @@ def main():
 		sys.exit(2)
         #Need to figure out how to handle "all" option well
 	source = source.capitalize()
+	source = source.rstrip("_")
 	#Return the number of the cal file. If we have not done this source
 	#Before it will return 0 and trigger the if
 	already_done = redlog.check_cal(filename) 
@@ -120,7 +121,7 @@ def main():
 		s = scantable(malt.cal_dir+renamed_file, average=True)
 	cal_name = renamed_file.rstrip(".rpf")
 	f_avt = plot_all_ifs(s,source,cal_name)
-	dataline = fit_lines(f_avt,cal_name)
+	dataline = fit_lines(f_avt,cal_name,source)
 	update_database(source,dataline)
 	plot_context(source,cal_name)
 	print_report(source,cal_name)
@@ -183,7 +184,7 @@ def plot_all_ifs(s,source,cal_name):
 	shutil.copy(outname,malt.ver_dir)
 	return(f_avt)
 
-def fit_lines(f_avt,cal_name):
+def fit_lines(f_avt,cal_name,source):
 	lines,freqs,ifs = reduce_malt.setup_lines()
 
 	dataline = np.zeros(1,dtype=[('name','a20'),('tsys','f4'),('elev','f4'),
@@ -191,8 +192,14 @@ def fit_lines(f_avt,cal_name):
 				 ('hcop','f4',6),('hcn','f4',6)])
 	dataline[0]['name'] = cal_name
 	fitlines = ["hcop","hnc","n2hp","hcn"]
+	print(source)
+	if (source.startswith("G301cal")):
+		vbase = -42.7
+	elif (source.startswith("G337cal")):
+		vbase = -62.5
 	for ifno,line in enumerate(lines):
 		if line in fitlines:
+			print(line)
 			sel1 = selector()
 			sel1.set_ifs(ifno)
 			f_avt.set_selection(sel1)
@@ -203,23 +210,26 @@ def fit_lines(f_avt,cal_name):
 			if line == "hcop" or line == "hnc":
 				n_gauss = 1
 				g.set_function(gauss=1)
-				g.set_gauss_parameters(2,-50,5)
+				g.set_gauss_parameters(2,vbase,5)
 			elif line == "n2hp":
 				n_gauss = 3
 				g.set_function(gauss=3)
-				g.set_gauss_parameters(1,-41,4,component=0)
-				g.set_gauss_parameters(0.5,-50,4,component=1)
-				g.set_gauss_parameters(0.5,-35,4,component=2)
+				g.set_gauss_parameters(1,vbase,4,component=0)
+				g.set_gauss_parameters(0.5,vbase-9,4,component=1)
+				g.set_gauss_parameters(0.5,vbase+6,4,component=2)
 			elif line == "hcn":
 				n_gauss = 3
 				g.set_function(gauss=3)
-				g.set_gauss_parameters(1,-41,4,component=0)
-				g.set_gauss_parameters(0.5,-48,4,component=1)
-				g.set_gauss_parameters(0.5,-37,4,component=2)
-
-			g.fit()
-			failed = False
-			res = g.get_parameters()
+				g.set_gauss_parameters(1,vbase,4,component=0)
+				g.set_gauss_parameters(0.5,vbase-5,4,component=1)
+				g.set_gauss_parameters(0.5,vbase+3,4,component=2)
+			failed=False
+			try:
+				g.fit()
+			except:
+				failed=True
+			if not failed:
+				res = g.get_parameters()
 			area_err = 1. #Dummy area error
 			try:
 				data_line = [res['params'][0],res['errors'][0],
@@ -321,7 +331,7 @@ def plot_context(source,cal_name):
 		pylab.xticks(xpos[st::2],xlab[st::2],rotation=30,fontsize=5,ha='right')
 #		locs,labels = pylab.yticks()
 		pylab.yticks(fontsize=9)
-	pylab.savefig(malt.ver_dir+"LatestCal.png")
+	pylab.savefig(malt.ver_dir+source+"LatestCal.png")
 
 
 def print_report(source,cal_name):

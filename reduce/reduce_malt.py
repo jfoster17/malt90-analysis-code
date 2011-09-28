@@ -72,7 +72,7 @@ def main():
 		elif o == "-n":
 			do_date = True
 			date = a
-			print("Reducing a night of data -- "+data)
+			print("Reducing a night of data -- "+date)
 		elif o == "-s":
 			do_source = True
 			source = a

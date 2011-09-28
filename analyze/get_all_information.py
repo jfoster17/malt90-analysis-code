@@ -34,11 +34,11 @@ def main():
         #print(source.id,source.trimmed_files)
         name = source.trimmed_files[0].split('_')[0]
         source_names.append(name)
-    print(source_names)
+    #print(source_names)
     #print(len(finished_sources))
-    #print(len(half_sources))
-    #for source in half_sources:
-    #    print(source.id,source.trimmed_files)
+    print(len(half_sources))
+    for source in half_sources:
+        print(source.id,source.trimmed_files)
     
             
 def get_all_ids(year_filter = None):
