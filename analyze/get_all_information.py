@@ -11,8 +11,8 @@ def main():
     all_sources = []
     finished_sources = []
     half_sources = []
-    print(all_ids)
-    print(len(all_ids))
+    #print(all_ids)
+    #print(len(all_ids))
     for source_id in all_ids:
         single_files = []
         list_files = []
@@ -30,15 +30,30 @@ def main():
         if len(list_files) == 1:
             source.trimmed_files = list_files
             half_sources.append(source)
+
+    #print(finished_sources)
+    #return(0)
+
     for source in finished_sources:
         #print(source.id,source.trimmed_files)
         name = source.trimmed_files[0].split('_')[0]
         source_names.append(name)
-    #print(source_names)
-    #print(len(finished_sources))
-    print(len(half_sources))
-    for source in half_sources:
-        print(source.id,source.trimmed_files)
+        #source.get_noise()
+        #one_bad = False
+        #for i,noise in enumerate(source.maps_noise):
+        #    if noise > 0.9:
+        #        one_bad = True
+        #if one_bad:
+        #    print(source.basic_name)
+        #    print(source.maps_noise)
+        #    print(source.trimmed_files)
+
+    for source_name in source_names:
+        print(source_name)
+#    print(len(finished_sources))
+ #   print(len(half_sources))
+  #  for source in half_sources:
+   #     print(source.id,source.trimmed_files)
     
             
 def get_all_ids(year_filter = None):

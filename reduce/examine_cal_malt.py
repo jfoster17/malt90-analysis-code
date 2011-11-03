@@ -231,6 +231,8 @@ def fit_lines(f_avt,cal_name,source):
 			if not failed:
 				res = g.get_parameters()
 			area_err = 1. #Dummy area error
+			print(res['params'][0],res['errors'][0])
+			print(res['params'][1],res['errors'][1])
 			try:
 				data_line = [res['params'][0],res['errors'][0],
 					     res['params'][1],res['errors'][1],
