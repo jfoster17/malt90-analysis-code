@@ -26,14 +26,21 @@ import reduce_malt
 import malt_params as malt
 #This ugly stuff gets matplotlib 1.0.0 to be loaded
 sys.path[0] = '/usr/local/lib/python2.5/site-packages'
-import matplotlib
-reload(matplotlib)
-#...but it still does not work
+#sys.path[11] = ''
+#sys.path[14] = ''
 import matplotlib as mpl
+reload(mpl)
+#...but it still does not work
+#import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
-from asap import *
+print(mpl.__version__)
+#import matplotlib.pylab as pylab
+
+#import matplotl.pyplot as plt
+#from asap import *
+import asap
 import pickle
+reload(mpl)
 
 def main():
 	try:
@@ -106,23 +113,23 @@ def main():
 	if do_all and (source == "G301cal"):
 		filelist = glob.glob(malt.cal_dir+"G301cal*.rpf")
 		tempfile = filelist[0]
-		curr = scantable(tempfile,average=True)
+		curr = asap.scantable(tempfile,average=True)
 		for filename in filelist:
-			temp = scantable(filename,average=True)
-			curr = merge(curr,temp)
+			temp = asap.scantable(filename,average=True)
+			curr = asap.merge(curr,temp)
 		s = curr
 		file = "G301cal_full"
 	elif do_all and (source == "G337cal"):
 		filelist = glob.glob(malt.cal_dir+"G337cal*.rpf")
 		tempfile = filelist[0]
-		curr = scantable(tempfile,average=True)
+		curr = asap.scantable(tempfile,average=True)
 		for filename in filelist:
-			temp = scantable(filename,average=True)
-			curr = merge(curr,temp)
+			temp = asap.scantable(filename,average=True)
+			curr = asap.merge(curr,temp)
        		s = curr
 		file = "G337cal_full"
 	else:
-		s = scantable(malt.cal_dir+renamed_file, average=True)
+		s = asap.scantable(malt.cal_dir+renamed_file, average=True)
 	cal_name = renamed_file.rstrip(".rpf")
 	f_avt = plot_all_ifs(s,source,cal_name)
 	dataline = fit_lines(f_avt,cal_name,source)
@@ -153,12 +160,12 @@ def plot_all_ifs(s,source,cal_name):
 	lines,freqs,ifs = reduce_malt.setup_lines()
 
 	f_avt = prep_scantable(s)
-	plotter.set_legend(mode=-1)
-	plotter.set_colors('blue')
-	plotter.set_abcissa(fontsize=18)
-	plotter.set_ordinate(fontsize=18)
-	plotter.set_title(title=".",fontsize=4)
-	plotter.set_range(-120,200,-0.25,3.5) #G301cal
+	asap.plotter.set_legend(mode=-1)
+	asap.plotter.set_colors('blue')
+	asap.plotter.set_abcissa(fontsize=18)
+	asap.plotter.set_ordinate(fontsize=18)
+	asap.plotter.set_title(title=".",fontsize=4)
+	asap.plotter.set_range(-120,200,-0.25,3.5) #G301cal
         #plotter.set_range(-120,200,-0.25,1.0) #Nessie
 
 	calfolder = malt.cal_dir+"CalFolder"
@@ -168,17 +175,17 @@ def plot_all_ifs(s,source,cal_name):
 		pass
 	#Plot each line and approximate central velocity
 	for ifno,line in enumerate(lines):
-		sel1 = selector()
+		sel1 = asap.selector()
 		sel1.set_ifs(ifno)
 		f_avt.set_selection(sel1)
-		plotter.plot(f_avt)
-		plotter.text(100,1,line,fontsize=24)
+		asap.plotter.plot(f_avt)
+		asap.plotter.text(100,1,line,fontsize=24)
 		if (source == "G301cal"):
-			plotter.axvline(x=-42.7,ymin=0,ymax=1,color='r') #G301cal
+			asap.plotter.axvline(x=-42.7,ymin=0,ymax=1,color='r') #G301cal
 		elif (source == "G337cal"):
-			plotter.axvline(x=-62.5,ymin=0,ymax=1,color='r') #G337cal
+			asap.plotter.axvline(x=-62.5,ymin=0,ymax=1,color='r') #G337cal
 	        #plotter.axvline(x=-39,ymin=0,ymax=1,color='r') #Nessie
-       		plotter.save(calfolder+'/IF'+str(ifno).zfill(2)+'.eps')
+       		asap.plotter.save(calfolder+'/IF'+str(ifno).zfill(2)+'.eps')
 
 	# Montage the individual images together #
 	outname = malt.cal_dir+cal_name+".png"
@@ -204,12 +211,12 @@ def fit_lines(f_avt,cal_name,source):
 	for ifno,line in enumerate(lines):
 		if line in fitlines:
 			print(line)
-			sel1 = selector()
+			sel1 = asap.selector()
 			sel1.set_ifs(ifno)
 			f_avt.set_selection(sel1)
 			dataline[0]['tsys'] = f_avt.get_tsys()[0]
 			dataline[0]['elev'] = f_avt.get_elevation()[0]
-			g = fitter()
+			g = asap.fitter()
 			g.set_scan(f_avt)
 			if line == "hcop" or line == "hnc":
 				n_gauss = 1
@@ -247,7 +254,7 @@ def fit_lines(f_avt,cal_name,source):
 				print("Failed Fit")
 				failed = True
 			if failed == False:
-				rcParams['plotter.gui'] = False
+				asap.rcParams['plotter.gui'] = False
 				fname = malt.cal_dir+cal_name+"_no_smooth_"+line+".png"
 				g.plot(residual=True,filename=fname)
 				shutil.copy(fname,malt.ver_dir)
@@ -307,11 +314,11 @@ def plot_context(source,cal_name):
 	nums = [4,3,2,1]
 	for line,ccolor,i in zip(fitlines,colors,nums):
 		if i == 4:
-			ax1 = pylab.subplot(4,1,i)
-			pylab.ylabel("Peak T [K]",fontsize=9)
+			ax1 = mpl.pylab.subplot(4,1,i)
+			mpl.pylab.ylabel("Peak T [K]",fontsize=9)
 		else:
-			ax2 = pylab.subplot(4,1,i,sharex=ax1)
-			pylab.setp(ax2.get_xticklabels(),visible=False)
+			ax2 = mpl.pylab.subplot(4,1,i,sharex=ax1)
+			mpl.pylab.setp(ax2.get_xticklabels(),visible=False)
 		dates2 = old_data['name']
 		dates = [date[-12:] for date in dates2]
 		old_line = old_data[line]
@@ -319,25 +326,26 @@ def plot_context(source,cal_name):
 		prior_range = np.std(old_line[:,0])
 		yup = prior_mean+prior_range
 		ydo = prior_mean-prior_range
-		pylab.fill([-1,-1,n_old+1,n_old+1],[ydo,yup,yup,ydo],color=ccolor,alpha=0.1)
+		#print sys.path
+		mpl.pylab.fill([-1,-1,n_old+1,n_old+1],[ydo,yup,yup,ydo],fc=ccolor,alpha=0.1)
       		yup = prior_mean+prior_range*2
 		ydo = prior_mean-prior_range*2
-		pylab.fill([-1,-1,n_old+1,n_old+1],[ydo,yup,yup,ydo],color=ccolor,alpha=0.1)
-		pylab.plot(old_line[:,0],'o',color=ccolor,ms=4)
-		pylab.plot([n_old],[new_data[line][0][0]],'*',mec=ccolor,mfc=ccolor,ms=10)
-		pylab.title(line,fontsize=11)
-		pylab.xlim(-1,n_old+1) 
-		locs,lables = pylab.xticks()
+		mpl.pylab.fill([-1,-1,n_old+1,n_old+1],[ydo,yup,yup,ydo],fc=ccolor,alpha=0.1)
+		mpl.pylab.plot(old_line[:,0],'o',color=ccolor,ms=4)
+		mpl.pylab.plot([n_old],[new_data[line][0][0]],'+',mec=ccolor,mfc=ccolor,ms=10)
+		mpl.pylab.title(line,fontsize=11)
+		mpl.pylab.xlim(-1,n_old+1) 
+		locs,lables = mpl.pylab.xticks()
 		xpos = np.arange(-1,n_old+1)
 		xlab = ['']+list(dates)+[new_data['name'][0][-12:]]+['']
 		if len(xpos) % 2 == 0:
 			st = 1
 		else:
 			st = 0
-		pylab.xticks(xpos[st::2],xlab[st::2],rotation=30,fontsize=5,ha='right')
+		mpl.pylab.xticks(xpos[st::2],xlab[st::2],rotation=30,fontsize=5,ha='right')
 #		locs,labels = pylab.yticks()
-		pylab.yticks(fontsize=9)
-	pylab.savefig(malt.ver_dir+source+"LatestCal.png")
+		mpl.pylab.yticks(fontsize=9)
+	mpl.pylab.savefig(malt.ver_dir+source+"LatestCal.png")
 
 
 def print_report(source,cal_name):
