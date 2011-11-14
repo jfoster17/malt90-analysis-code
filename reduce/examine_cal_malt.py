@@ -18,13 +18,17 @@ Options
 -h : Help    -- Display this help 
 """
 
-
 import os,sys,getopt,glob,shutil,math,datetime
 from subprocess import *
 import numpy as np
 import ReduceLog
 import reduce_malt
 import malt_params as malt
+#This ugly stuff gets matplotlib 1.0.0 to be loaded
+sys.path[0] = '/usr/local/lib/python2.5/site-packages'
+import matplotlib
+reload(matplotlib)
+#...but it still does not work
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
