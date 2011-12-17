@@ -18,20 +18,23 @@ def get_velocity(source,auto=False,direction=None,altdir=None):
 	using either the HCO+ and HNC lines or
 	looking up from a table. Try table first
 	unless specifically instructed otherwise.
+	Look at year lists one-by-one. Assume later velocity 
+	is going to be the best one.
 	"""
 	velocity = 999
 	if not auto:
 		print("Looking up central velocity from table...")
 		source_trim = source[0:15]
 		print("Looking for "+source_trim)
-		path_to_vel = os.path.join(malt.sd,
-					   'malt90_velocities_year1.txt')
-		f = open(path_to_vel,'r')
-		for line in f:
-			if line.split()[0].strip() == source_trim:
-				velocity = float(line.split()[1])
-
-		f.close()
+		for lookup_table in ['malt90_velocities_year1.txt',
+				     'malt90_velocities_year2.txt']:
+			path_to_vel = os.path.join(malt.sd,
+					   lookup_table)
+			f = open(path_to_vel,'r')
+			for line in f:
+				if line.split()[0].strip() == source_trim:
+					velocity = float(line.split()[1])
+       			f.close()
 	if velocity == 999 or auto:
 		path_to_auto_vel = os.path.join(malt.sd,'auto_vel.txt')
 		f = open(path_to_auto_vel,'a')
