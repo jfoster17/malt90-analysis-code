@@ -24,7 +24,7 @@ def main():
 		reverse = sys.argv[1]
 	except:
 		reverse = False
-	source_list = ['G007.276-00.531']
+	#source_list = ['G007.276-00.531']
 	#source_list = ['G318.725-00.224'] #Ugly code to do one source
 	for sourcename in source_list:
 		copy_source("gridzilla",sourcename,reverse)

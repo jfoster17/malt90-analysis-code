@@ -70,7 +70,7 @@ def do_gridzilla(source,working_names,patricio_flag=False):
 			fout = fname+"_"+line
 			fin  = fname+"_"+line+".sdfits"
 			q = sp.Popen(["glish",'-l',malt.sd+
-				   'gzill_malt90_patricio.g',line,
+				   'gzill_malt90_byhand.g',line,
 				   str(freq),str(i-1),fout,
 				   fin])
 			q.wait()
@@ -88,33 +88,33 @@ def do_gridzilla(source,working_names,patricio_flag=False):
 		nfiles = len(af)
 		if nfiles == 1:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_patricio.g',
+				      'gzill_malt90_byhand.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0]])
 		elif nfiles == 2:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_patricio.g',
+				      'gzill_malt90_byhand.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1]])
 		elif nfiles == 3:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_patricio.g',
+				      'gzill_malt90_byhand.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2]])
 		elif nfiles == 4:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_patricio.g',
+				      'gzill_malt90_byhand.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2],af[3]])
 		elif nfiles == 5:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_patricio.g',
+				      'gzill_malt90_byhand.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2],
 				      af[3],af[4]])
 		elif nfiles == 6:
 			q = sp.Popen(["glish",'-l',malt.sd+
-				      'gzill_malt90_patricio.g',
+				      'gzill_malt90_byhand.g',
 				      line, str(freq),str(i-1),
 				      fileout,af[0],af[1],af[2],
 				      af[3],af[4],af[5]])
@@ -126,7 +126,7 @@ def reduce_map(source,working_names,patricio_flag=False):
 	
 	### Do Livedata ###
 	for filename in working_names:
-		p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_patricio.g',
+		p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_byhand.g',
                           '-plain',filename+".rpf"])
 		p.wait()
 
