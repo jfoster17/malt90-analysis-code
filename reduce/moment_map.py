@@ -89,9 +89,12 @@ def identify_velocity(source,minchan=200,maxchan=3896,sig=5,direction=None,altdi
 	ind_vels = np.array(ind_vels)
 	return(np.median(ind_vels))
 
-def do_source(source,lines,direction=None,auto=False,altdir=None):
+def do_source(source,lines,direction=None,auto=False,altdir=None,vel=-999):
 	print("Sourcename: "+source)
-	central_velocity = get_velocity(source,auto,direction,altdir)
+	if vel == -999:
+		central_velocity = get_velocity(source,auto,direction,altdir)
+	else:
+		central_velocity = float(vel)
 	print("Center Velocity = "+str(central_velocity)+" km/s")
 	create_basic_directories(lines,altdir)
 	#create_output_directories(source,lines)

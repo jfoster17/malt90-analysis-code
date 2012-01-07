@@ -10,6 +10,7 @@ a simple naming system.
 Options
 -h : Display this help
 -s : Specify the source name
+-v : Specify a central velocity (normally use this)
 -f : List raw data files to combine
 -p : Do reduction for Patricio
 """
@@ -26,12 +27,13 @@ import preprocess_malt,reduce_malt,ReduceLog,moment_map
 
 def main():
 	try:
-		opts,args = getopt.getopt(sys.argv[1:],"s:f:hp")
+		opts,args = getopt.getopt(sys.argv[1:],"s:f:v:hp")
 	except getopt.GetoptError,err:
 		print(str(err))
 		print(__doc__)
 		sys.exit(2)
 	patricio_flag = False
+	velocity = -999
 	for o,a in opts:
 		if o == "-p":
 			patricio_flag = True
@@ -43,8 +45,10 @@ def main():
 		if o == "-h":
 			print(__doc__)
 			sys.exit(1)
+		if o == "-v":
+			velocity = a
 	working_names = copy_files(source,input_files)
-	reduce_map(source,working_names,patricio_flag)
+	reduce_map(source,working_names,patricio_flag,velocity)
 
 def copy_files(source,input_files):
 #	print(source)
@@ -122,8 +126,9 @@ def do_gridzilla(source,working_names,patricio_flag=False):
 		q.wait()
 
 
-def reduce_map(source,working_names,patricio_flag=False):
-	
+def reduce_map(source,working_names,patricio_flag=False,velocity=-999):
+
+	print(velocity)
 	### Do Livedata ###
 	for filename in working_names:
 		p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_byhand.g',
@@ -162,8 +167,11 @@ def reduce_map(source,working_names,patricio_flag=False):
 		prihdr.update('BMIN',0.0105,
 			      'Beam minor FWHM (degrees)')
 		hdulist.flush()
-		
-	moment_map.do_source(source,lines,
+	if velocity != -999:
+		moment_map.do_source(source,lines,
+			     auto=False,altdir=malt.byhand_data_dir,vel=velocity)
+	else:
+		moment_map.do_source(source,lines,
 			     auto=True,altdir=malt.byhand_data_dir)
 	for line in lines:
 		endpart = source+'_'+line+'_mommaps'
