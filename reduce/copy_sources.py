@@ -68,19 +68,20 @@ def copy_source(directory,sourcename,origin,destination,test_run):
 		files = glob.glob(search_dir+'/'+sourcename+'*')
 		for fin in files:
 			if ((("_2" not in fin) and ("_3" not in fin)) or ("_2" in sourcename) or ("_3" in sourcename)): #Logic to remove unwanted _2
-				fout = fin.replace(origin,destination)
-				print("From: "+fin)
-				print("To: "+fout)
-				if not test_run:
-					try:
-						shutil.rmtree(fout)
-					except OSError:
-						pass
-					try:
-						os.remove(fout)
-					except OSError:
-						pass
-					shutil.move(fin,fout)
+				if ("_GL" not in fin): #This line does not work properly because GLat/GLon cruft still ends up inside sources/
+					fout = fin.replace(origin,destination)
+					print("From: "+fin)
+					print("To: "+fout)
+					if not test_run:
+						try:
+							shutil.rmtree(fout)
+						except OSError:
+							pass
+						try:
+							os.remove(fout)
+						except OSError:
+							pass
+						shutil.move(fin,fout)
 
 def clean_links(sourcename,destination):
 	search_dir = os.path.join(malt_params.base,
@@ -100,6 +101,15 @@ def clean_links(sourcename,destination):
 			os.symlink(fsout,fsin)
 		except OSError:
 			pass
+	print(search_dir)
+	files = glob.glob(search_dir+'/'+sourcename+'/*_GL*')
+	print(files)
+	for fsin in files:
+		print(fsin)
+		try:
+			shutil.rmtree(fsin)
+		except OSError:
+			pass
 
 def copy_source_plain(directory,sourcename,origin,destination,test_run,symlink):
 	search_dir = os.path.join(malt_params.base,
@@ -108,20 +118,21 @@ def copy_source_plain(directory,sourcename,origin,destination,test_run,symlink):
 	files = glob.glob(search_dir+'/'+sourcename+'*')
 	for fin in files:
 		if ((("_2" not in fin) and ("_3" not in fin)) or ("_2" in sourcename) or ("_3" in sourcename)): #Logic to remove unwanted _2
-			fout = fin.replace(origin,destination)
-			print("From: "+fin)
-			print("To: "+fout)
-			if not test_run:
-				try:
-					shutil.rmtree(fout)
-				except OSError:
-					pass
-				try:
-					os.remove(fout)
-				except OSError:
-					pass
-				shutil.move(fin,fout)
-
+			if ("_GL" not in fin): #Does not work
+				fout = fin.replace(origin,destination)
+				print("From: "+fin)
+				print("To: "+fout)
+				if not test_run:
+					try:
+						shutil.rmtree(fout)
+					except OSError:
+						pass
+					try:
+						os.remove(fout)
+					except OSError:
+						pass
+					shutil.move(fin,fout)
+				
 if __name__ == '__main__':
 	main()
 

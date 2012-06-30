@@ -462,9 +462,11 @@ def make_verification_plots(source,direction=None):
 					+'/'+source+direction+"_"+line
 					+"_mommaps/"+source+direction+"_"
 					+line+"_mom0.fits",header=True)
+		d = np.nan_to_num(d)
 		plt.clf()
 		im = idl_stats.blur_image(d*mask,3)
-		plt.imshow(im[::-1,:])
+		plt.imshow(im[::-1,:])#, vmin=0, vmax = 19)
+#		print(im[::-1,:])
 		a = plt.colorbar()
 		a.set_label("K km/s")
 		plt.title(source+" "+direction+" "+line

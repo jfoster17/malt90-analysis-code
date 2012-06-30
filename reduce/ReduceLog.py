@@ -222,7 +222,7 @@ class ReduceLog:
 						fullname_catalog = "IRDC28"
 				f = open(self.class_file,'r')
 				for line in f:
-					pieces = line.split()
+					pieces = line.split(',') #This comma for new classifications file.
 					try:
 						atlasgal_catalog = pieces[0]
 					except IndexError:
