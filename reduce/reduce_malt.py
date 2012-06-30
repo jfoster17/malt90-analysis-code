@@ -26,7 +26,7 @@ Options
 -i : Ignore -- ignore the listed steps when reducing, even if the version
                listed in the reduction log is out-of-date. Will crash
 	       if previous steps do not exists. Enter as comma-separated list
-	       Valid options: ldata,gzilla,mommaps
+	       Valid options: ldata,gzilla,mommaps,reorg
 -h : Help   -- display this help
 
 --- Changelog ---
@@ -148,8 +148,11 @@ def do_reduction(source,force_list=[],ignore_list=[],
 		do_gridzilla(source,filenames,lines,freqs,ifs,force=False,
 			     quicklook=quicklook)
 	### Do Reorganization ###
-	### Always do this step ###
-	create_source_folder(source,lines,quicklook=quicklook)
+	### Always do this step unless explicitly ignored###
+	if 'reorg' in ignore_list:
+		pass
+	else:
+		create_source_folder(source,lines,quicklook=quicklook)
 
 	### Do moment maps ###
 	if onlyone:
