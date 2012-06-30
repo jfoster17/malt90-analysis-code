@@ -27,6 +27,9 @@ Options
                listed in the reduction log is out-of-date. Will crash
 	       if previous steps do not exists. Enter as comma-separated list
 	       Valid options: ldata,gzilla,mommaps,reorg
+-j : JustIm -- just remake the integrated intensity map verification image, not
+               the spectra. A single-use option to remake year1 and year2 images
+	       after the relevant files have already been moved out.
 -h : Help   -- display this help
 
 --- Changelog ---
@@ -51,7 +54,7 @@ import malt_params as malt
 
 def main():
 	try:
-		opts,args=getopt.getopt(sys.argv[1:], "n:s:af:i:h")
+		opts,args=getopt.getopt(sys.argv[1:], "n:s:af:i:jh")
 	except getopt.GetoptError,err:
 		print str(err)
 		print(__doc__)
@@ -61,6 +64,7 @@ def main():
 	do_source = False
 	do_date   = False
 	do_all    = False
+	justim    = False
 
 	for o,a in opts:
 		if o == "-f":
@@ -81,6 +85,8 @@ def main():
 			#I think force does not work well with do_all
 			do_all = True
 			print("Reducing all undone sources")
+		elif o == "-j":
+			justim = True
 		elif o == "-h":
 			print(__doc__)
 			sys.exit(1)
@@ -110,7 +116,7 @@ def main():
 		sys.exit(2)
 	for one_source in sources:
 		try:
-			do_reduction(one_source,force_list,ignore_list)
+			do_reduction(one_source,force_list,ignore_list,justim=justim)
 		except (IOError,OSError),e:
 			print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
 			print("OS Error while processing "+one_source)
@@ -118,7 +124,7 @@ def main():
 
 
 def do_reduction(source,force_list=[],ignore_list=[],
-		 quicklook=False,onlyone=None):
+		 quicklook=False,onlyone=None,justim=False):
 	"""Main script calling Livedate,Gridzilla,Organize,MomentMaps"""
 
 	lines,freqs,ifs = setup_lines(quicklook)
@@ -170,7 +176,7 @@ def do_reduction(source,force_list=[],ignore_list=[],
 			   quicklook=quicklook)
 	### Make Verification Images ###
 	### Always do this step too  ###
-	make_verification_plots(source,direction=onlyone)
+	make_verification_plots(source,direction=onlyone,justim=justim)
 
 def setup_lines(quicklook=False,patricio_flag=False):
 	if quicklook:
@@ -437,13 +443,27 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 		if not quicklook:
 			redlog.set_val(file_involved,"mommaps",
 				       malt.vnum["mommaps"])
+def robust_getdata(base):
+	print("Entering robust_getdata")
+	try:
+		data,h = pyfits.getdata(malt.data_dir+base,header=True)
+		print("Trying base dir...")
+	except:
+		try:
+			print("Trying year1 dir...")
+			data,h = pyfits.getdata(malt.data_dir_y1+base,header=True)
+		except:
+			data,h = pyfits.getdata(malt.data_dir_y2+base,header=True)
+	return(data,h)
 
-def make_verification_plots(source,direction=None):
+def make_verification_plots(source,direction=None,justim=False):
 	"""Make an image of the 0th moment map
 	and of the sepctrum at the peak position with
 	a line indicating the central velocity"""
 	lines = ["hcop","hnc"]
 
+#	print("This is justim")
+	#print(justim)
 	if not direction:
 		direction = ""
 	else:
@@ -451,20 +471,21 @@ def make_verification_plots(source,direction=None):
 	#print("This is direction")
 	#print(direction)
 	for line in lines:
-		cube,h = pyfits.getdata(malt.data_dir+'gridzilla/'
-					+line+'/'+source+direction+"_"
-					+line+"_MEAN.fits",header=True)
-		snr = np.nan_to_num(pyfits.getdata(malt.data_dir+'mommaps/'
+		print(source)
+		print(line)
+		cube,h = robust_getdata('gridzilla/'+line+'/'+source+direction+"_"+line+"_MEAN.fits")
+		
+		snr = np.nan_to_num(robust_getdata('mommaps/'
 						   +line+'/'+source+direction
 						   +"_"+line+"_mommaps/"
 						   +source+direction+"_"
-						   +line+"_snr0.fits"))
+						   +line+"_snr0.fits")[0])
 		mask = np.zeros(snr.shape)
 		mask[3:28,3:28] = 1
-		d,hmom = pyfits.getdata(malt.data_dir+'mommaps/'+line
+		d,hmom = robust_getdata('mommaps/'+line
 					+'/'+source+direction+"_"+line
 					+"_mommaps/"+source+direction+"_"
-					+line+"_mom0.fits",header=True)
+					+line+"_mom0.fits")
 		d = np.nan_to_num(d)
 		plt.clf()
 		im = idl_stats.blur_image(d*mask,3)
@@ -480,31 +501,32 @@ def make_verification_plots(source,direction=None):
 		plt.xlabel("Galactic Longitude Offset [9 arcsec pixels]")
 		plt.savefig(malt.data_dir+'verification/'+source+"_"
 			    +line+"_mom0"+".png")
-	
-		nspec = h['NAXIS3']
-		vmin = hmom['VMIN']
-		vmax = hmom['VMAX']
-		vcen = np.average([vmin,vmax])
-		vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']
-		       +h['CRVAL3'])/1e3
-	
-		snr_smooth = idl_stats.blur_image(snr,5)
-	
-		peak_pix = np.argmax(snr_smooth*mask)
-		pid = np.unravel_index(peak_pix,snr.shape)
 
-		spectra = idl_stats.smooth(cube[...,pid[0],pid[1]])
+		if not justim:
+			nspec = h['NAXIS3']
+			vmin = hmom['VMIN']
+			vmax = hmom['VMAX']
+			vcen = np.average([vmin,vmax])
+			vel = ((np.arange(nspec)+1-h['CRPIX3'])*h['CDELT3']
+			       +h['CRVAL3'])/1e3
 	
-		plt.clf()
-		plt.plot(vel,spectra)
-		plt.title(source+" "+direction+" "+line
-			  +" at maximum integrated intensity")
-		plt.axvline(x=vcen,color='r')
-		plt.xlim((vcen-100,vcen+100))
-		plt.xlabel("Velocity [km/s]")
-		plt.ylabel("T [K]")
-		plt.savefig(malt.base+'data/verification/'+source+"_"
-			    +line+"_velcheck"+".png")
+			snr_smooth = idl_stats.blur_image(snr,5)
+			
+			peak_pix = np.argmax(snr_smooth*mask)
+			pid = np.unravel_index(peak_pix,snr.shape)
+
+			spectra = idl_stats.smooth(cube[...,pid[0],pid[1]])
+	
+			plt.clf()
+			plt.plot(vel,spectra)
+			plt.title(source+" "+direction+" "+line
+				  +" at maximum integrated intensity")
+			plt.axvline(x=vcen,color='r')
+			plt.xlim((vcen-100,vcen+100))
+			plt.xlabel("Velocity [km/s]")
+			plt.ylabel("T [K]")
+			plt.savefig(malt.base+'data/verification/'+source+"_"
+				    +line+"_velcheck"+".png")
 
 
 if __name__ == '__main__':

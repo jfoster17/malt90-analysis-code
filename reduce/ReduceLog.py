@@ -102,12 +102,17 @@ class ReduceLog:
 	
 	def find_undone(self,vcheck,force=None):
 		"""Horribly hacked to work with forcing moment
-		maps. All comparisons should be case as floats"""
+		maps. All comparisons should be case as floats.
+		Even worse hacky option to regenerate verification images
+		by using ignore=ldata,gzilla,mommaps,reorg force=verify.
+		"""
 		g = open(self.lock)
 		fcntl.flock(g,2) #Lock the lock file during access
 		self.read()
 		undone_files = []
-		if force == "mommaps":
+		if force == "verify":
+			vcheckm = 10. #Always do it.
+		elif force == "mommaps":
 			vcheckm = 10. #Always do it
 		else:
 			vcheckm = vcheck["mommaps"]

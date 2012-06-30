@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-General script to copy a given list os sources from/to specified folders.
+General script to copy a given list of sources from/to specified folders.
 -l : file from which to pull list of sources to move
 -o : origin folder. To move from pipeline use 'data'. From year2 use 'data/year2'
 -d : destination folder; same format as origin

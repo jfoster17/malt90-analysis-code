@@ -13,6 +13,8 @@ vnum = {"rename":"1.5","ldata":"1.6","gzilla":"1.6","arrange":"1.6","mommaps":"1
 #sd = '/nfs/atapplic/malt/reduce/'                                                                                                                                                        
 sd = '/epp/atapplic/malt/malt90-analysis-code/reduce/' #Seems to be new location
 data_dir = base+'data/'
+data_dir_y1 = base+'data/'+'year1/'
+data_dir_y2 = base+'data/'+'year2/'
 
 #ReduceLog
 log_location = base+'reduction_log.txt'
