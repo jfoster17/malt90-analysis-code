@@ -346,6 +346,7 @@ def plot_context(source,cal_name):
 #		locs,labels = pylab.yticks()
 		mpl.pylab.yticks(fontsize=9)
 	mpl.pylab.savefig(malt.ver_dir+source+"LatestCal.png")
+	mpl.pylab.savefig(malt.ver_dir+"LatestCal.png")
 
 
 def print_report(source,cal_name):
