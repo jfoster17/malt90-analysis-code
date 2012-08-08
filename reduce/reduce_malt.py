@@ -51,6 +51,8 @@ import ReduceLog
 import moment_map
 import idl_stats
 import malt_params as malt
+import preprocess_malt
+import datetime
 
 def main():
 	try:
@@ -94,6 +96,18 @@ def main():
 			assert False, "unhandled option"
 			print(__doc__)
 			sys.exit(2)
+
+	#Make sure that log is up-to-date.
+	#This step is quick, so just do +/- on current UT. 
+	now_utc = datetime.datetime.utcnow()
+	today = datetime.date(now_utc.year,now_utc.month,now_utc.day)
+	plus1 = today + datetime.timedelta(days=1)
+	minu1 = today - datetime.timedelta(days=1)
+
+	for dates in [today,plus1,minu1]:
+		files_to_process = preprocess_malt.get_new_files(
+			           dates.isoformat(),in_middle_of_obs = True)
+		preprocess_malt.rename_files(files_to_process)
 
 	redlog = ReduceLog.ReduceLog()
 	if do_date:
@@ -167,13 +181,19 @@ def do_reduction(source,force_list=[],ignore_list=[],
 		filenames = [source+"_GLat",source+"_GLon",source]
 	if 'mommaps' in force_list:
 		#pass #Temporarily disable. Restore this!
-                do_mommaps(source,filenames,lines,force=True,
+                try:
+			do_mommaps(source,filenames,lines,force=True,
 			   quicklook=quicklook)
+		except IOError:
+			pass
 	elif 'mommaps' in ignore_list:
 		pass
 	else:
-		do_mommaps(source,filenames,lines,force=False,
-			   quicklook=quicklook)
+		try:
+			do_mommaps(source,filenames,lines,force=False,
+				   quicklook=quicklook)
+		except IOError:
+			pass
 	### Make Verification Images ###
 	### Always do this step too  ###
 	make_verification_plots(source,direction=onlyone,justim=justim)
@@ -444,17 +464,23 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 			redlog.set_val(file_involved,"mommaps",
 				       malt.vnum["mommaps"])
 def robust_getdata(base):
+	fail = False
+	data = 0
+	h = 0
 	print("Entering robust_getdata")
 	try:
 		data,h = pyfits.getdata(malt.data_dir+base,header=True)
-		print("Trying base dir...")
+		#print("Trying base dir...")
 	except:
 		try:
-			print("Trying year1 dir...")
+			#print("Trying year1 dir...")
 			data,h = pyfits.getdata(malt.data_dir_y1+base,header=True)
 		except:
-			data,h = pyfits.getdata(malt.data_dir_y2+base,header=True)
-	return(data,h)
+			try:
+				data,h = pyfits.getdata(malt.data_dir_y2+base,header=True)
+			except:
+				fail = True
+	return(data,h,fail)
 
 def make_verification_plots(source,direction=None,justim=False):
 	"""Make an image of the 0th moment map
@@ -470,19 +496,27 @@ def make_verification_plots(source,direction=None,justim=False):
 		direction = "_"+direction
 	#print("This is direction")
 	#print(direction)
+	failflag = False
 	for line in lines:
 		print(source)
 		print(line)
-		cube,h = robust_getdata('gridzilla/'+line+'/'+source+direction+"_"+line+"_MEAN.fits")
-		
+		cube,h,fail = robust_getdata('gridzilla/'+line+'/'+source+direction+"_"+line+"_MEAN.fits")
+				
+		if fail:
+			failflag = True
+			break
 		snr = np.nan_to_num(robust_getdata('mommaps/'
 						   +line+'/'+source+direction
 						   +"_"+line+"_mommaps/"
 						   +source+direction+"_"
 						   +line+"_snr0.fits")[0])
 		mask = np.zeros(snr.shape)
-		mask[3:28,3:28] = 1
-		d,hmom = robust_getdata('mommaps/'+line
+		try:
+			mask[3:28,3:28] = 1
+		except IndexError:
+			failflag = True
+			break
+		d,hmom,fail = robust_getdata('mommaps/'+line
 					+'/'+source+direction+"_"+line
 					+"_mommaps/"+source+direction+"_"
 					+line+"_mom0.fits")
@@ -527,8 +561,21 @@ def make_verification_plots(source,direction=None,justim=False):
 			plt.ylabel("T [K]")
 			plt.savefig(malt.base+'data/verification/'+source+"_"
 				    +line+"_velcheck"+".png")
-
-
+	if failflag:
+		print("=================================================")
+		print("Something failed in the reduction of this source.")
+		print("Source name: "+source)
+		print("The most likely cause is that the data was not   ")
+		print("yet synced over from the telescope. Data syncs at")
+		print("3, 18, 33, and 48 minutes past the hour. Wait    ")
+		print("until a minute past one of these marks and try   ")
+		print("your reduction command again.                    ")
+		print("=================================================")
+	else:
+		print("=================================================")
+		print("This source ("+source+") appears to have         ")
+		print("reduced successfully.                            ")
+		print("=================================================")
 if __name__ == '__main__':
 	main()
 

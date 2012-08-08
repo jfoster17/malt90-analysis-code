@@ -25,15 +25,15 @@ import ReduceLog
 import reduce_malt
 import malt_params as malt
 #This ugly stuff gets matplotlib 1.0.0 to be loaded
-sys.path[0] = '/usr/local/lib/python2.5/site-packages'
+#sys.path[0] = '/usr/local/lib/python2.5/site-packages'
 #sys.path[11] = ''
 #sys.path[14] = ''
 import matplotlib as mpl
-reload(mpl)
+#reload(mpl)
 #...but it still does not work
 #import matplotlib as mpl
 mpl.use('Agg')
-print(mpl.__version__)
+#print(mpl.__version__)
 #import matplotlib.pylab as pylab
 
 #import matplotl.pyplot as plt
