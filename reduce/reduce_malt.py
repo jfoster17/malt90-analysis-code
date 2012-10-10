@@ -421,7 +421,7 @@ def do_mommaps(source,filenames,lines,force=False,quicklook=False):
 		if ('GLat' in file_involved) or ('GLon' in file_involved):
 			part_file = True
 		mommap_needed = False
-		direction = file_involved.partition('_')[2].lstrip('_2')
+		direction = file_involved.partition('_')[2].lstrip('_2').lstrip('_3')
 		print("Direction = "+direction)
 		print("Length of direction = ",len(direction)) 
 		print("File involved = "+file_involved)
