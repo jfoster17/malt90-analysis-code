@@ -58,8 +58,11 @@ def copy_files(source,input_files):
 		working_names.append(working_name)
 	#	print(malt.source_dir+input_file)
 		#print(malt.byhand_rename_dir+working_name+".rpf")
-		shutil.copyfile(malt.source_dir+input_file,
-				malt.byhand_rename_dir+working_name+".rpf")
+		##############
+		#Restore This!
+		#shutil.copyfile(malt.source_dir+input_file,
+		#		malt.byhand_rename_dir+working_name+".rpf")
+		##############
 	return(working_names)
 
 
@@ -129,12 +132,14 @@ def do_gridzilla(source,working_names,patricio_flag=False):
 def reduce_map(source,working_names,patricio_flag=False,velocity=-999):
 
 	print(velocity)
+	##############
+	#Restore This!
 	### Do Livedata ###
-	for filename in working_names:
-		p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_byhand.g',
-                          '-plain',filename+".rpf"])
-		p.wait()
-
+	#for filename in working_names:
+	#	p = sp.Popen(["glish",'-l', malt.sd+'ldata_malt90_byhand.g',
+        #                  '-plain',filename+".rpf"])
+	#	p.wait()
+	###################
 	do_gridzilla(source,working_names,patricio_flag = patricio_flag)
 
 	lines,freqs,ifs = reduce_malt.setup_lines(patricio_flag=patricio_flag)
