@@ -17,6 +17,10 @@ class Malt90SourceBasic:
         self.comments = self.get_comments()
         self.get_log_info()
         self.set_basic_name()
+        
+        self.data_dir = "/DATA/MALT_1/MALT90/data/sources/"+self.basic_name+"/"
+        self.data_dirs = [self.data_dir+"year1",self.data_dir+"year2",self.data_dir+"year3"]
+
 
     def set_basic_name(self):
         self.basic_name = self.source_names[0][0:15]
@@ -47,6 +51,54 @@ class Malt90SourceBasic:
     def get_comments(self):
         """Get freeform comments about a source from text database."""
         pass
+    
+    def robust_get_moment_map(self,molecule,moment):
+        """
+        Terrible kludge to get moment maps out of all three years
+        """
+        try:
+            path = self.get_moment_map_path(self.data_dirs[2],molecule,moment)
+            data = np.nan_to_num(pyfits.getdata(path))
+        except IOError:
+            try: 
+                path = self.get_moment_map_path(self.data_dirs[1],molecule,moment)
+                data = np.nan_to_num(pyfits.getdata(path))
+            except IOError:
+                try: 
+                    path = self.get_moment_map_path(self.data_dirs[0],molecule,moment)
+                    data = np.nan_to_num(pyfits.getdata(path))
+                except IOError:
+                    print("No such moment map found!")
+                    return(0)
+        return(data)
+
+    def get_moment_map_path(self,dir,molecule,moment):
+        mol = "_"+molecule+"_"
+        a = os.path.join(dir,self.name+mol+"mommaps",self.name+mol+moment+".fits")
+        print(a)
+        return(a)
+
+    def get_all_snr(self):
+
+        self.max_snr = {"n2hp":0,"hnc":0,"hcop":0,"hcn":0}
+        self.num_snr = {"n2hp":0,"hnc":0,"hcop":0,"hcn":0}
+        for line in ['n2hp','hnc','hcop','hcn']:
+            self.max_snr[line] = self.get_snr(line)
+            self.num_snr[line] = self.get_num_snr_in_center(line,threshold=5)
+            
+    def get_snr(self,line):
+        """
+        Get the maximum SNR in the map. 
+        """
+        snr = self.robust_get_moment_map(line,'snr0')
+        max_val = np.max(snr[8:18,8:18])
+        return(max_val)
+
+    def get_num_snr_in_center(self,line,threshold=5):
+        snr = self.robust_get_moment_map(line,'snr0')
+        above_thresh = np.ma.masked_less(snr[8:18,8:18],threshold)
+        num = np.ma.count(above_thresh)
+        return(num)
 
     def get_noise(self):
         """Estimate the noise for a source (both GLon and GLat) from 13c34s cube."""

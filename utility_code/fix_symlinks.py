@@ -1,0 +1,32 @@
+import os
+import glob
+
+
+def main():
+    """For some reason, year3 data symlinks are fubar. This should fix them locally (Mako).
+    Still need to figure out why they are not consistent on Draco."""
+    lines = ["n2hp","13cs","h41a","ch3cn","hc3n","13c34s","hnc","hc13ccn","hcop","hcn","hnco413","hnco404","c2h","hn13c","sio","h13cop"]
+    main_dir = '/DATA/MALT_1/MALT90/data/year4/gridzilla/'
+    for line in lines:
+        filelist = glob.glob(main_dir+line+'/*MEAN.fits')
+        for filein in filelist:
+            print(filein)
+            filename = os.path.basename(filein)
+            src = '../../gridzilla/'+line+'/'+filename
+            print(src)
+            source = filename[0:15]
+            print(source)
+            targ = '/DATA/MALT_1/MALT90/data/year4/sources/'+source+'/'+filename
+            print(targ)
+            try:
+                os.unlink(targ)
+            except OSError:
+                pass
+            if "GL" not in filein:
+                try:
+                    os.symlink(src,targ)
+                except OSError:
+                    pass
+
+if __name__ == '__main__':
+    main()

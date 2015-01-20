@@ -7,7 +7,7 @@ import Malt90SourceBasic
 from sets import Set
 
 def main():
-    all_ids = get_all_ids(year_filter = "2011")
+    all_ids = get_all_ids(year_filter = "2012")
     all_sources = []
     finished_sources = []
     half_sources = []

@@ -10,10 +10,15 @@ def main():
     find_noisy(year1sources,dir)
     
     print("Year2")
-    dir = "/DATA/MALT_1/MALT90/data/sources/"
+    dir = "/DATA/MALT_1/MALT90/data/year2/sources/"
     year2sources = os.listdir(dir)
     find_noisy(year2sources,dir)
-    
+
+    print("Year3")
+    dir = "/DATA/MALT_1/MALT90/data/sources/"
+    year3sources = os.listdir(dir)
+    find_noisy(year3sources,dir)
+
 def find_noisy(sources,dir):
     for source in sources:
 #        print(source)
