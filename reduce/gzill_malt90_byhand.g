@@ -3,10 +3,10 @@ include 'gridzilla.g'
 name := argv[2]
 
 # Input directory.
-read_dir := spaste('/DATA/MALT_1/MALT90/data/livedata/',name)
+read_dir := spaste('/DATA/MALT_1/MALT90/data/byhand/livedata/',name)
 
 # Output directory.
-write_dir := spaste('/DATA/MALT_1/MALT90/data/gridzilla/',name)
+write_dir := spaste('/DATA/MALT_1/MALT90/data/byhand/gridzilla/',name)
 
 
 doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F]

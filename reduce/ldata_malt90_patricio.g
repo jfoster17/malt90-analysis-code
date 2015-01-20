@@ -6,16 +6,14 @@
 include 'livedatareducer.g'
 
 #Normal line setup
-lines := ["n2hp","13cs","h41a","ch3cn","hc3n","13c34s","hnc","hc13ccn","hcop","hcn","hnco413","hnco404","c2h","hn13c","sio","h13cop"]
-#First night/backward IFS
-#lines := ["ch3cn","h41a","13cs","n2hp","hc13ccn","hnc","13c34s","hc3n","hnco404","hnco413","hcn","hcop","c2h","hn13c","sio","h13cop"]
+lines := ["n2hp","13cs","h41a","ch3cn","hc3n","13c34s","hnc","hc13ccn","hcop","hcn","hnco413","hnco404","c2h","hn13c"]
 
 # Input directory.
-read_dir := '/DATA/MALT_1/MALT90/data/renamed'
+read_dir := '/DATA/MALT_1/MALT90/data/byhand/renamed'
 files := argv[3:len(argv)]
 
 # Output directory.
-write_dir := '/DATA/MALT_1/MALT90/data/livedata'
+write_dir := '/DATA/MALT_1/MALT90/data/byhand/livedata'
 
 # Start and stop channels
 startc := 1
@@ -51,8 +49,8 @@ for (read_file in files) {
   print 'Begin processing' 
   if (read_file !~ m/\.rpf/) next
   print 'Processing', read_file
-  doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F]
-  for (ifno in 1:16) {
+  doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F]
+  for (ifno in 1:14) {
     print 'Working on IF', ifno
     doif[ifno] := T
     rootname := read_file ~ s/(\.rpf|\.rpf)//

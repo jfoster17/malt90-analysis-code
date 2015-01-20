@@ -11,11 +11,11 @@ lines := ["n2hp","13cs","h41a","ch3cn","hc3n","13c34s","hnc","hc13ccn","hcop","h
 #lines := ["ch3cn","h41a","13cs","n2hp","hc13ccn","hnc","13c34s","hc3n","hnco404","hnco413","hcn","hcop","c2h","hn13c","sio","h13cop"]
 
 # Input directory.
-read_dir := '/DATA/MALT_1/MALT90/data/renamed'
+read_dir := '/DATA/MALT_1/MALT90/data/byhand/renamed'
 files := argv[3:len(argv)]
 
 # Output directory.
-write_dir := '/DATA/MALT_1/MALT90/data/livedata'
+write_dir := '/DATA/MALT_1/MALT90/data/byhand/livedata'
 
 # Start and stop channels
 startc := 1
@@ -52,20 +52,39 @@ for (read_file in files) {
   if (read_file !~ m/\.rpf/) next
   print 'Processing', read_file
   doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F]
-  for (ifno in 1:16) {
-    print 'Working on IF', ifno
-    doif[ifno] := T
-    rootname := read_file ~ s/(\.rpf|\.rpf)//
-    write_file := spaste(lines[ifno],'/',rootname,'_',lines[ifno])
-    ldred.reader->setparm(IFsel=doif)
-    ldred.reader->setparm(startChan=startc)
-    ldred.reader->setparm(endChan=endc)
+  ifno := 9
+  print 'Working on IF', ifno
+  doif[ifno] := T
+  rootname := read_file ~ s/(\.rpf|\.rpf)//
+  write_file := spaste(lines[ifno],'/',rootname,'_',lines[ifno])
+  ldred.reader->setparm(IFsel=doif)
+  ldred.reader->setparm(startChan=startc)
+  ldred.reader->setparm(endChan=endc)
     #directory := spaste('sdfits/',lines[ifno])
     #ldred.writer->setparm(write_dir = )
-    ldred->start([read_file=read_file,write_file=write_file])
-    await ldred->finished
-    doif[ifno] := F
-  }
+  ldred->start([read_file=read_file,write_file=write_file])
+  await ldred->finished
+  doif[ifno] := F
+}
+
+for (read_file in files) {
+  print 'Begin processing' 
+  if (read_file !~ m/\.rpf/) next
+  print 'Processing', read_file
+  doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F]
+  ifno := 7
+  print 'Working on IF', ifno
+  doif[ifno] := T
+  rootname := read_file ~ s/(\.rpf|\.rpf)//
+  write_file := spaste(lines[ifno],'/',rootname,'_',lines[ifno])
+  ldred.reader->setparm(IFsel=doif)
+  ldred.reader->setparm(startChan=startc)
+  ldred.reader->setparm(endChan=endc)
+    #directory := spaste('sdfits/',lines[ifno])
+    #ldred.writer->setparm(write_dir = )
+  ldred->start([read_file=read_file,write_file=write_file])
+  await ldred->finished
+  doif[ifno] := F
 }
 
 # Finished with livedata.

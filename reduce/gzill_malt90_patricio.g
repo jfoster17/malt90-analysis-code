@@ -3,13 +3,13 @@ include 'gridzilla.g'
 name := argv[2]
 
 # Input directory.
-read_dir := spaste('/DATA/MALT_1/MALT90/data/livedata/',name)
+read_dir := spaste('/DATA/MALT_1/MALT90/data/byhand/livedata/',name)
 
 # Output directory.
-write_dir := spaste('/DATA/MALT_1/MALT90/data/gridzilla/',name)
+write_dir := spaste('/DATA/MALT_1/MALT90/data/byhand/gridzilla/',name)
 
 
-doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F]
+doif := [F,F,F,F,F,F,F,F,F,F,F,F,F,F]
 
 infile := argv[6:len(argv)]
 outfile := argv[5]
@@ -39,7 +39,7 @@ lsg := gridzilla(remote = T,
                  continuum = F,
                  baseline = F,
                  projection = 'SIN',
-                 coordSys = 'galactic',
+                 coordSys = 'equatorial',
                  statistic = 'mean',
                  clip_fraction = 0.0,
                  tsys_weight = T,

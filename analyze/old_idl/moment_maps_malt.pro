@@ -1,6 +1,6 @@
 pro moment_maps_malt,directory
-base_mom_maps = '/mako3/MALT_1/MALT90/data/moment_maps/'
-in_dir = '/mako3/MALT_1/MALT90/data/gridzilla/'
+base_mom_maps = '/DATA/MALT_1/MALT90/data/moment_maps/'
+in_dir = '/DATA/MALT_1/MALT90/data/gridzilla/'
 cd,in_dir+directory,CURRENT=old_dir
 files = file_search('*MEAN.fits')
 for i=0,n_elements(files)-1 do begin
